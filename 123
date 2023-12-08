@@ -1,0 +1,27 @@
+// ==UserScript==
+// @name         My Script
+// @namespace    http://tampermonkey.net/
+// @version      1
+// @description  My Tampermonkey script
+// @match        *://*/*
+// @grant        none
+// @updateURL    https://drive.google.com/file/d/1qJPyFa9JkUAb9NqyY_vuVqOEpqcqC7af/view
+// @downloadURL  https://drive.google.com/file/d/1qJPyFa9JkUAb9NqyY_vuVqOEpqcqC7af/view
+// ==/UserScript==
+
+
+(function() {
+    function clickElement(selector, delay) {
+      var element = document.querySelector(selector);
+      if (element) {
+        element.click();
+      } else {
+        setTimeout(function() {
+          clickElement(selector, delay);
+        }, delay);
+      }
+    }
+
+    clickElement();
+
+})();
