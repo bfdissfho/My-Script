@@ -1,12 +1,12 @@
 // ==UserScript==
 // @name         My Script
 // @namespace    http://tampermonkey.net/
-// @version      1
+// @version      2
 // @description  My Tampermonkey script
 // @match        *://*/*
 // @grant        none
-// @updateURL    https://drive.google.com/file/d/1qJPyFa9JkUAb9NqyY_vuVqOEpqcqC7af/view
-// @downloadURL  https://drive.google.com/file/d/1qJPyFa9JkUAb9NqyY_vuVqOEpqcqC7af/view
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/123.user.js
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/123.user.js
 // ==/UserScript==
 
 
