@@ -5,8 +5,8 @@
 // @description  My Tampermonkey script
 // @match        *://*/*
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/123.user.js
-// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/123.user.js
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/123
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/123
 // ==/UserScript==
 
 
@@ -23,5 +23,5 @@
     }
 
     clickElement();
-// 1:35 7/1/2024
+// 1:38 7/1/2024
 })();
