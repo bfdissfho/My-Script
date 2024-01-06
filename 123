@@ -5,7 +5,7 @@
 // @description  My Tampermonkey script
 // @match        *://*/*
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/123
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/123.user.js
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/123.user.js
 // ==/UserScript==
 
