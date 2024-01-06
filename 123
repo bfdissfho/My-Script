@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Script
 // @namespace    http://tampermonkey.net/
-// @version      5
+// @version      6
 // @description  My Tampermonkey script
 // @match        *://*/*
 // @grant        none
@@ -23,6 +23,6 @@
     }
 
     clickElement();
-// 1:50 7/1/2024
+// 1:58 7/1/2024
 
 })();
