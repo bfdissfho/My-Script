@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         My Script
 // @namespace    http://tampermonkey.net/
-// @version      7
+// @version      8
 // @description  My Tampermonkey script
 // @match        *://*/*
 // @grant        none
@@ -24,5 +24,5 @@
 
     clickElement();
 // 19:11 7/1/2024
-
+//real auto check
 })();
