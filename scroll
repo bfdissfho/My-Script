@@ -5,8 +5,8 @@
 // @description  My Tampermonkey script
 // @match        https://queue.ticketmaster.sg/softblock/*, https://tixcraft.queue-it.net/softblock/*
 // @grant        none
-// @updateURL    
-// @downloadURL
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/scroll
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/scroll
 // ==/UserScript==
 
 
