@@ -1,0 +1,41 @@
+// ==UserScript==
+// @name         buyticket findticket
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  My Tampermonkey script
+// @match        https://ticketmaster.sg/activity/detail/*
+// @grant        none
+// @updateURL    
+// @downloadURL
+// ==/UserScript==
+
+
+
+(function() {
+    'use strict';
+
+    function click_buyticket() {
+        // click buy ticket
+        let buy_ticket = document.querySelector(
+            "#main-container > section.whiteNav.shadow.sticky-top > div > div > div.col-lg-3.col-md-3.col-sm-3.col-xs-12.col-12.pt-3.py-sm-2.order-1.order-sm-2 > a"
+        );
+        if (buy_ticket) {
+            buy_ticket.click();
+        }
+    }
+
+    function click_findticket() {
+        // Check if element with class 'btn btn-primary text-bold m-0' exists
+        let find_ticket = document.querySelector('.btn.btn-primary.text-bold.m-0');
+        if (find_ticket) {
+            let url = find_ticket.href;
+
+            window.location.href = url;
+        }
+    }
+
+    setTimeout(function() {
+        click_buyticket();
+        setTimeout(click_findticket, 3000);
+    }, 3000);
+})();
