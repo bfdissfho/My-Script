@@ -6,8 +6,8 @@
 // @author       Your Name
 // @match        https://queue.ticketmaster.sg/
 // @match        https://tixcraft.queue-it.net/
-// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/e1e80c14b3be2e4b0262ce9a195897dac157a691/Yes
-// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/e1e80c14b3be2e4b0262ce9a195897dac157a691/Yes
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/Yes
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/Yes
 // @grant        none
 // ==/UserScript==
 
