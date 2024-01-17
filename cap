@@ -5,6 +5,8 @@
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/check-captcha/*
 // @grant        none
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/cap
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/cap
 // ==/UserScript==
 
 
