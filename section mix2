@@ -1,0 +1,146 @@
+// ==UserScript==
+// @name         section mix2
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  My Tampermonkey script
+// @match        https://ticketmaster.sg/ticket/area/*
+// @grant        none
+// @updateURL
+// @downloadURL
+// ==/UserScript==
+
+(function() {
+
+function section_click(elementSelector) {
+    const section = document.querySelector(elementSelector);
+    // Create a new click event
+    const clickEvent = new MouseEvent("click", {
+      view: window,
+      bubbles: true,
+      cancelable: true,
+    });
+    // Dispatch the click event on the element
+    if (section) {
+      section.dispatchEvent(clickEvent);
+    }
+  }
+
+
+function click_section(field){
+    let section1 = "#" + field + ">g:nth-of-type(1)>polygon"
+    let section2 = "#" + field + ">g:nth-of-type(1)>path"
+    console.log(section1)
+    console.log(section2)
+
+    let section3 = document.querySelector(section1);
+    let section4 = document.querySelector(section2);
+    console.log(section3)
+    console.log(section4)
+    if (section3) {
+    console.log("222");
+    section_click(section1);
+
+
+    } else if (section4) {
+    console.log("333");
+    section_click(section2);
+
+    }
+}
+
+
+
+// detect changes in ticket price element
+function ticket_price(){
+    let ticketPriceElement = document.querySelector('.w100.form-select');
+    console.log("Element:", ticketPriceElement);
+    const valueToSelect = "6";
+
+    // Find the index of the option with the specified value
+    let optionIndex = Array.from(ticketPriceElement.options).findIndex(option => option.value === valueToSelect);
+    console.log("Option Index:", optionIndex);
+
+    // If the option with the specified value exists, select it
+    if (optionIndex !== -1) {
+    ticketPriceElement.selectedIndex = optionIndex;
+    console.log("Selected Option:", ticketPriceElement.value);
+    }
+
+
+    // Confirm button
+    const bestAvailableButton = document.getElementById("autoMode");
+    bestAvailableButton.click();
+}
+
+
+function check_available() {
+
+
+            const scriptElements = document.querySelectorAll("#mapSelectArea script");
+
+            // Check if the fourth <script> element exists
+            if (scriptElements.length >= 4) {
+                // Access the content of the fourth <script> element using index 3 (since it's a 0-based index)
+                const fourthScriptContent = scriptElements[3].textContent;
+
+                // Use a regular expression to find the 'var zone' object
+                const regex = /var zone = ({[^]*?"}]}})/;
+                const match = fourthScriptContent.match(regex);
+
+                if (match) {
+                const zoneObjectString = match[1];
+
+                // Convert the extracted 'var zone' object to a JavaScript object using JSON.parse
+                const zoneObject = JSON.parse(zoneObjectString);
+
+                //因為有時同一個section分成兩個價錢，而唔一定係全部level 300，可以只係部分
+                // List of field codes to check
+                const fieldsToCheck = ['field_113', 'field_110', 'field_116', 'field_109', 'field_117','field_614', 'field_612', 'field_615', 'field_611', 'field_616', 'field_610', 'field_617', 'field_609', 'field_618', 'field_608', "field_PEN_VIP", "field_PEN_PE", "field_PEN_GA", 'field_106', 'field_105', 'field_120', 'field_121', 'field_122', 'field_104', 'field_103', 'field_102', 'field_101', 'field_123', 'field_124', 'field_125', 'field_407', 'field_419', 'field_420', 'field_421', 'field_406', 'field_405', 'field_422', 'field_423', 'field_424', 'field_413', 'field_412', 'field_414', 'field_415', 'field_411', 'field_416', 'field_410', 'field_417', 'field_409', 'field_418', 'field_408'];
+
+                // Loop through the list of fields and check their areaStatus
+                for (const fieldCode of fieldsToCheck) {
+                    const fieldData = zoneObject[fieldCode];
+                    if (fieldData) {
+                    const areaStatus = fieldData.areaStatus;
+                    console.log(`${fieldCode} area status: ${areaStatus}`);
+
+                    // Take an action based on areaStatus
+                    if (areaStatus === "AVAILABLE") {
+                        // Perform your action here for available areas
+                        console.log(`Action for ${fieldCode} when AVAILABLE`);
+                        //console.log(fieldCode);
+                        setTimeout(click_section(fieldCode), 5000);
+                        break;
+
+                    } else if (areaStatus === "SINGLE SEATS") {
+                        // Perform your action here for single seat areas
+                        console.log(`Action for ${fieldCode} when SINGLE SEATS`);
+                    } else if (areaStatus === "UNAVAILABLE") {
+                        // Perform your action here for unavailable areas
+                        console.log(`Action for ${fieldCode} when UNAVAILABLE`);
+                    }
+                    } else {
+                    console.log(`${fieldCode} not found in the 'var zone' information.`);
+                    }
+                }
+                } else {
+                console.log("The 'var zone' information was not found.");
+                }
+            } else {
+                console.log("The fourth <script> element does not exist.");
+            }
+            }
+
+
+
+
+
+
+
+
+setTimeout(function(){
+    check_available();
+    setTimeout(ticket_price, 5000);
+}, 5000);
+
+})();
