@@ -1,0 +1,67 @@
+// ==UserScript==
+// @name         print at home
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  My Tampermonkey script
+// @match        https://ticketmaster.sg/ticket/checkout
+// @grant        none
+// @updateURL    
+// @downloadURL
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    function credit_card() {
+        let credit_card = document.querySelector('.field-checkoutform-paymentid-12 input[type="radio"]');
+        if (credit_card) {
+            console.log("Credit card radio button found.");
+            credit_card.click();
+            }
+        }
+                  // Step 2: Wait for the Print-at-Home option to appear
+    function print_at_home(){
+        let print_at_home = document.querySelector('#checkoutform-shipmentid');
+        if (print_at_home) {
+            console.log("Print-at-Home option found.");
+            let options = print_at_home.options;
+            for (let i = 0; i < options.length; i++) {
+                if (options[i].text === 'Print-at-Home') {
+                    options[i].selected = true;
+                    break;
+                    }
+                }
+            }
+        }
+    function secure_ticket(){
+        const secureTicketOptOut = document.getElementById('secureTicketOptOut');
+        if (secureTicketOptOut){
+            secureTicketOptOut.click();
+            }
+        }
+
+    function hear(){
+        const hear_option = document.getElementById('opt-out');
+        if (hear_option){
+            hear_option.click();
+            }
+        }
+
+    function confirm(){
+        let confirm = document.querySelector('#submitButton');
+        if (confirm) {
+            console.log("Confirm button found.");
+            confirm.click();
+            }
+        }
+
+    setTimeout(function() {
+        credit_card();
+        setTimeout(print_at_home, 3000); // You can use 0 to run it immediately after click_buyticket
+        setTimeout(secure_ticket, 6000);
+        setTimeout(hear, 8000);
+        setTimeout(confirm, 480000)
+    }, 5000);
+
+
+    })();
