@@ -1,0 +1,62 @@
+// ==UserScript==
+// @name         scroll and softblock
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  My Tampermonkey script
+// @match        https://queue.ticketmaster.sg/softblock/*, https://tixcraft.queue-it.net/softblock/*
+// @grant        none
+// @updateURL    
+// @downloadURL
+// ==/UserScript==
+
+
+(function() {
+  // Function to scroll to the target element
+  function scrollToTargetElement() {
+    // Get a reference to the target element by its ID
+    var targetElement = document.getElementById("solution");
+
+    // Check if the target element exists
+    if (targetElement) {
+      // Scroll to the target element
+      targetElement.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  // Function to start observing mutations
+  function startObservingMutations() {
+    let observer = new MutationObserver(function(mutationsList) {
+      for (let mutation of mutationsList) {
+        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+          console.log("123");
+          let anticapture_solve = document.querySelector('div.antigate_solver.solved');
+          if (anticapture_solve) {
+            console.log("456");
+            let checkboxElement = document.querySelector('button.botdetect-button.btn');
+            if (checkboxElement) {
+              console.log("789");
+              checkboxElement.click();
+              // Disconnect the observer immediately after clicking checkboxElement
+              observer.disconnect();
+              setTimeout(startObservingMutations, 15000);
+            } else {
+              observer.disconnect();
+              // If checkboxElement is not found, do not restart the observer
+            }
+          }
+        }
+      }
+    });
+
+    // Start observing changes in the document
+    observer.observe(document, { childList: true, subtree: true });
+  }
+
+  // Call the scroll function to scroll to the target element with a delay
+  setTimeout(function() {
+    scrollToTargetElement();
+    // Start observing mutations after scrolling
+    setTimeout(startObservingMutations, 15000); // 1 second delay (adjust as needed)
+  }, 2000); // 2 seconds delay (adjust as needed)
+})();
+
