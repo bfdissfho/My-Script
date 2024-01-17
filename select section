@@ -5,8 +5,8 @@
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
-// @updateURL    
-// @downloadURL
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/select%20section
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/select%20section
 // ==/UserScript==
 
 (function() {
