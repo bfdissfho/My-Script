@@ -1,0 +1,49 @@
+// ==UserScript==
+// @name         website capture
+// @namespace    http://tampermonkey.net/
+// @version      1.0
+// @description  My Tampermonkey script
+// @match        https://ticketmaster.sg/ticket/check-captcha/*
+// @grant        none
+// ==/UserScript==
+
+
+
+(function() {
+
+  function click_button() {
+    let checkboxElement = document.querySelector('#TicketForm_agree');
+    if (checkboxElement) {
+      checkboxElement.click();
+      let buttonElement = document.querySelector('button.btn.btn-primary');
+      if (buttonElement) {
+        buttonElement.click();
+
+      }
+    }
+  };
+
+  function website_capture() {
+    let observer = new MutationObserver(function(mutationsList) {
+      for (let mutation of mutationsList) {
+        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+          let anticapture_solve = document.querySelector('div.antigate_solver.solved');
+          if (anticapture_solve) {
+            console.log("123")
+            observer.disconnect();
+            setTimeout(click_button, 3000)
+            // Simulate clicking the button after a 5-second delay
+              // 5-second delay
+            }
+          }
+        }
+      }
+    );
+
+    // Start observing changes in the document
+    observer.observe(document, { childList: true, subtree: true });
+  }
+
+  // Call the function
+  setTimeout(website_capture, 5000);
+})();
