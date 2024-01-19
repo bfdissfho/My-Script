@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix3
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      2.0
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
@@ -95,8 +95,9 @@ function check_available() {
 
                 //因為有時同一個section分成兩個價錢，而唔一定係全部level 300，可以只係部分
                 // List of field codes to check
-                const fieldsToCheck = ['field_614', 'field_612', 'field_615', 'field_611', 'field_616', 'field_610', 'field_617', 'field_609', 'field_618', 'field_608', 'field_113', 'field_110', 'field_116', 'field_109', 'field_117', "field_PEN_VIP", "field_PEN_PE", "field_PEN_GA", 'field_106', 'field_105', 'field_120', 'field_121', 'field_122', 'field_104', 'field_103', 'field_102', 'field_101', 'field_123', 'field_124', 'field_125', 'field_407', 'field_419', 'field_420', 'field_421', 'field_406', 'field_405', 'field_422', 'field_423', 'field_424','field_413', 'field_412', 'field_414', 'field_415', 'field_411', 'field_416', 'field_410', 'field_417', 'field_409', 'field_418', 'field_408'];
-                // Loop through the list of fields and check their areaStatus
+                const fieldsToCheck = ['field_607', 'field_619', 'field_606', 'field_620', "field_PEN_SL", "field_PEN_PS"];
+
+// Loop through the list of fields and check their areaStatus
                 for (const fieldCode of fieldsToCheck) {
                     const fieldData = zoneObject[fieldCode];
                     if (fieldData) {
