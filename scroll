@@ -1,9 +1,10 @@
 // ==UserScript==
 // @name         scroll and softblock
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      2.0
 // @description  My Tampermonkey script
-// @match        https://queue.ticketmaster.sg/softblock/*, https://tixcraft.queue-it.net/softblock/*
+// @match        https://queue.ticketmaster.sg/*
+// @match        https://tixcraft.queue-it.net/*
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/scroll
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/scroll
