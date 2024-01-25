@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name         Auto Click "Yes, please" Button
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      1
 // @description  Automatically click the "Yes, please" button when the "You're almost there" message is visible.
 // @author       Your Name
-// @match        https://queue.ticketmaster.sg/
-// @match        https://tixcraft.queue-it.net/
+// @match        https://queue.ticketmaster.sg/*
+// @match        https://tixcraft.queue-it.net/*
 // @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/Yes
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/Yes
 // @grant        none
