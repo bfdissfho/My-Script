@@ -18,23 +18,14 @@
     let checkingMessage = true;
     let buttonInterval;
 
-    function checkMessageAndButton() {
-        const messageElement = document.querySelector('span[data-bind*="You\'re almost there"]');
-
-        if (checkingMessage && messageElement && messageElement.style.display !== 'none') {
-            clearInterval(messageInterval); // Stop checking message
-            buttonInterval = setInterval(checkButtonAndClick, 10000); // Start checking button every 10 seconds
-        }
-    }
 
     function checkButtonAndClick() {
         const buttonElement = document.getElementById('buttonConfirmRedirect');
         if (buttonElement) {
             buttonElement.click();
-            clearInterval(buttonInterval); // Clear the button checking interval
         }
     }
 
     // Check message every 60 seconds
-    messageInterval = setInterval(checkMessageAndButton, 60000);
+    messageInterval = setInterval(checkButtonAndClick, 20000);
 })();
