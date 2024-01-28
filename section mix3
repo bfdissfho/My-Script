@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix3
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      3.0
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
@@ -95,7 +95,7 @@ function check_available() {
 
                 //因為有時同一個section分成兩個價錢，而唔一定係全部level 300，可以只係部分
                 // List of field codes to check
-                const fieldsToCheck = ['field_607', 'field_619', 'field_606', 'field_620', "field_PEN_SL", "field_PEN_PS"];
+                const fieldsToCheck = ['field_C2_D', 'field_C2_C', 'field_C2_E', 'field_C1_D', 'field_C1_B', 'field_C1_E', 'field_LS_B', 'field_LS_H', 'field_LS_D'];
 
 // Loop through the list of fields and check their areaStatus
                 for (const fieldCode of fieldsToCheck) {
