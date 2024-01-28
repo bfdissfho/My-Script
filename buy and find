@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         buyticket findticket
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      3.0
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/activity/detail/*
 // @grant        none
@@ -14,6 +14,8 @@
 (function() {
     'use strict';
 
+    var which_date = 0
+
     function click_buyticket() {
         // click buy ticket
         let buy_ticket = document.querySelector(
@@ -21,30 +23,32 @@
         );
         if (buy_ticket) {
             buy_ticket.click();
+            setTimeout(click_findticket, 2000);
         }
     }
 
 function click_findticket() {
     // Check if elements with class 'btn btn-primary text-bold m-0' exist
     let find_tickets = document.querySelectorAll('.btn.btn-primary.text-bold.m-0');
-    
+
     if (find_tickets.length > 0) {
         let url;
-        
+
         if (find_tickets.length > 1) {
             // Select the second element
-            url = find_tickets[1].href;
+            url = find_tickets[which_date].href;
         } else {
             // Select the first (and only) element
             url = find_tickets[0].href;
         }
 
         window.location.href = url;
+
     }
 }
 
-    setTimeout(function() {
-        click_buyticket();
-        setTimeout(click_findticket, 3000);
-    }, 3000);
+    setTimeout(click_buyticket, 1000);
+    setTimeout(click_buyticket, 7000);
+    setTimeout(click_buyticket, 16000);
+
 })();
