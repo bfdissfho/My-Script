@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix2
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      4.0
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
@@ -54,7 +54,7 @@ function click_section(field){
 function ticket_price(){
     let ticketPriceElement = document.querySelector('.w100.form-select');
     console.log("Element:", ticketPriceElement);
-    const valueToSelect = "6";
+    const valueToSelect = "4";
 
     // Find the index of the option with the specified value
     let optionIndex = Array.from(ticketPriceElement.options).findIndex(option => option.value === valueToSelect);
