@@ -95,7 +95,7 @@ function check_available() {
 
                 //因為有時同一個section分成兩個價錢，而唔一定係全部level 300，可以只係部分
                 // List of field codes to check
-                const fieldsToCheck = ['field_103', 'field_111', 'field_102', 'field_112', 'field_101', 'field_113', 'field_111', 'field_204', 'field_214', 'field_203', 'field_215', 'field_202', 'field_216', 'field_201', 'field_207', 'field_231'];
+                const fieldsToCheck = ['field_103', 'field_111', 'field_102', 'field_112', 'field_101', 'field_113', 'field_111', 'field_204', 'field_214', 'field_203', 'field_215', 'field_202', 'field_216', 'field_201', 'field_207'];
 
                 // Loop through the list of fields and check their areaStatus
                 for (const fieldCode of fieldsToCheck) {
