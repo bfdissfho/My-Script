@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name         select mix1
+// @name         section mix2
 // @namespace    http://tampermonkey.net/
 // @version      5.0
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/select%20section
-// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/select%20section
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/section%20mix2
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/section%20mix2
 // ==/UserScript==
 
 (function() {
@@ -54,7 +54,7 @@ function click_section(field){
 function ticket_price(){
     let ticketPriceElement = document.querySelector('.w100.form-select');
     console.log("Element:", ticketPriceElement);
-    const valueToSelect = "6";
+    const valueToSelect = "4";
 
     // Find the index of the option with the specified value
     let optionIndex = Array.from(ticketPriceElement.options).findIndex(option => option.value === valueToSelect);
@@ -96,7 +96,6 @@ function check_available() {
                 //因為有時同一個section分成兩個價錢，而唔一定係全部level 300，可以只係部分
                 // List of field codes to check
                 const fieldsToCheck = ['field_P4', 'field_P4_DP', 'field_P3', 'field_P5', 'field_P5', 'field_P2', 'field_P2_DP', 'field_P6', 'field_P6_DP', 'field_P6', 'field_P1', 'field_P1_DP', 'field_P7', 'field_P7_DP'];
-
                 // Loop through the list of fields and check their areaStatus
                 for (const fieldCode of fieldsToCheck) {
                     const fieldData = zoneObject[fieldCode];
