@@ -29,7 +29,7 @@
   }
 
   async function startObservingMutations() {
-    let checkboxElement = document.querySelector('button.botdetect-button.btn');
+    let checkboxElement = document.querySelector('.queue.challenge');
     console.log("000");
     if (checkboxElement) {
       let observer = new MutationObserver(async function(mutationsList) {
@@ -50,7 +50,7 @@
         }
         await sleep(2000);
         console.log("111");
-        checkboxElement = document.querySelector('button.botdetect-button.btn'); // Check checkboxElement again
+        checkboxElement = document.querySelector('.queue.challenge'); // Check checkboxElement again
         if (checkboxElement) {
           setTimeout(startObservingMutations, 5000)
         }else{observer.disconnect()};
