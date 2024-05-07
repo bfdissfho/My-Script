@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         scroll and softblock
 // @namespace    http://tampermonkey.net/
-// @version      2.0
+// @version      3.0
 // @description  My Tampermonkey script
 // @match        https://queue.ticketmaster.sg/*
 // @match        https://tixcraft.queue-it.net/*
@@ -29,9 +29,10 @@
   }
 
   async function startObservingMutations() {
-    let checkboxElement = document.querySelector('.queue.challenge');
+      let checkboxElement = document.querySelector('.queue.challenge');
+      let checkboxElement2 = document.querySelector('.softblock');
     console.log("000");
-    if (checkboxElement) {
+    if (checkboxElement || checkboxElement2) {
       let observer = new MutationObserver(async function(mutationsList) {
         for (let mutation of mutationsList) {
           if (mutation.addedNodes && mutation.addedNodes.length > 0) {
@@ -51,7 +52,7 @@
         await sleep(2000);
         console.log("111");
         checkboxElement = document.querySelector('.queue.challenge'); // Check checkboxElement again
-        if (checkboxElement) {
+        if (checkboxElement || checkboxElement2) {
           setTimeout(startObservingMutations, 5000)
         }else{observer.disconnect()};
       });
