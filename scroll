@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         scroll and softblock
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      4.0
 // @description  My Tampermonkey script
 // @match        https://queue.ticketmaster.sg/*
 // @match        https://tixcraft.queue-it.net/*
@@ -31,6 +31,7 @@
   async function startObservingMutations() {
       let checkboxElement = document.querySelector('.queue.challenge');
       let checkboxElement2 = document.querySelector('.softblock');
+      let robot_btn = document.querySelector('.botdetect-button.btn');
     console.log("000");
     if (checkboxElement || checkboxElement2) {
       let observer = new MutationObserver(async function(mutationsList) {
@@ -41,7 +42,7 @@
             if (anticapture_solve) {
               console.log("456");
               console.log("789");
-              checkboxElement.click();
+              robot_btn.click();
                 await sleep(2000);
               // Disconnect the observer immediately after clicking checkboxElement
               observer.disconnect();
