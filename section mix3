@@ -11,6 +11,9 @@
 
 (function() {
 
+let want_section = ['field_C2_D'];
+let want_quan = '4';
+
 function section_click(elementSelector) {
     const section = document.querySelector(elementSelector);
     // Create a new click event
@@ -54,7 +57,7 @@ function click_section(field){
 function ticket_price(){
     let ticketPriceElement = document.querySelector('.w100.form-select');
     console.log("Element:", ticketPriceElement);
-    const valueToSelect = "4";
+    const valueToSelect = want_quan;
 
     // Find the index of the option with the specified value
     let optionIndex = Array.from(ticketPriceElement.options).findIndex(option => option.value === valueToSelect);
@@ -95,7 +98,7 @@ function check_available() {
 
                 //因為有時同一個section分成兩個價錢，而唔一定係全部level 300，可以只係部分
                 // List of field codes to check
-                const fieldsToCheck = ['field_103', 'field_111', 'field_102', 'field_112', 'field_101', 'field_113', 'field_111', 'field_204', 'field_214', 'field_203', 'field_215', 'field_202', 'field_216', 'field_201', 'field_207', 'field_231'];
+                const fieldsToCheck = want_section;
 
 // Loop through the list of fields and check their areaStatus
                 for (const fieldCode of fieldsToCheck) {
