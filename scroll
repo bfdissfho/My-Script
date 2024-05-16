@@ -29,7 +29,9 @@
   }
 
   async function startObservingMutations() {
-      let checkboxElement = document.querySelector('.queue.challenge');
+      //let checkboxElement = document.querySelector('.queue.challenge');
+
+      let checkboxElement = document.querySelector('.before.prequeue.challenge');
       let checkboxElement2 = document.querySelector('.softblock');
       let robot_btn = document.querySelector('.botdetect-button.btn');
     console.log("000");
@@ -52,7 +54,7 @@
         }
         await sleep(2000);
         console.log("111");
-        checkboxElement = document.querySelector('.queue.challenge'); // Check checkboxElement again
+        checkboxElement = document.querySelector('.before.prequeue.challenge'); // Check checkboxElement again
         if (checkboxElement || checkboxElement2) {
           setTimeout(startObservingMutations, 5000)
         }else{observer.disconnect()};
