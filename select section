@@ -13,7 +13,7 @@
 
 //要改want_section和want_quan
 
-let want_section = ['field_314', 'field_313', 'field_312', 'field_311', 'field_310', 'field_309', 'field_328', 'field_329', 'field_330', 'field_331', 'field_332', 'field_333', 'field_322', 'field_320', 'field_323', 'field_324', 'field_319', 'field_318', 'field_PENB', 'field_PEN_B', 'field_PENA', 'field_PEN_A', 'field_225', 'field_226', 'field_217', 'field_216', 'field_221', 'field_220', 'field_219', 'field_222', 'field_223', 'field_224', 'field_229', 'field_228', 'field_227', 'field_218', 'field_213', 'field_214', 'field_215', 'field_231', 'field_212', 'field_211', 'field_210', 'field_209', 'field_232', 'field_233'];
+let want_section = ['field_314', 'field_313', 'field_312', 'field_311', 'field_310', 'field_309', 'field_328', 'field_329', 'field_330', 'field_331', 'field_332', 'field_333', 'field_PENB', 'field_PEN_B', 'field_PENA', 'field_PEN_A', 'field_322', 'field_320', 'field_323', 'field_324', 'field_319', 'field_318',  'field_225', 'field_226', 'field_217', 'field_216', 'field_221', 'field_220', 'field_219', 'field_222', 'field_223', 'field_224', 'field_229', 'field_228', 'field_227', 'field_218', 'field_213', 'field_214', 'field_215', 'field_231', 'field_212', 'field_211', 'field_210', 'field_209', 'field_232', 'field_233'];
 let want_quan = '6';    
 
 function section_click(elementSelector) {
