@@ -29,13 +29,13 @@
   }
 
   async function startObservingMutations() {
-      //let checkboxElement = document.querySelector('.queue.challenge');
+      let checkboxElement3 = document.querySelector('.queue.challenge');
 
       let checkboxElement = document.querySelector('.before.prequeue.challenge');
       let checkboxElement2 = document.querySelector('.softblock');
       let robot_btn = document.querySelector('.botdetect-button.btn');
     console.log("000");
-    if (checkboxElement || checkboxElement2) {
+    if (checkboxElement || checkboxElement2 || checkboxElement3) {
       let observer = new MutationObserver(async function(mutationsList) {
         for (let mutation of mutationsList) {
           if (mutation.addedNodes && mutation.addedNodes.length > 0) {
@@ -55,7 +55,7 @@
         await sleep(2000);
         console.log("111");
         checkboxElement = document.querySelector('.before.prequeue.challenge'); // Check checkboxElement again
-        if (checkboxElement || checkboxElement2) {
+        if (checkboxElement || checkboxElement2 || checkboxElement3) {
           setTimeout(startObservingMutations, 5000)
         }else{observer.disconnect()};
       });
