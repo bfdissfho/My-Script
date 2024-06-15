@@ -55,6 +55,8 @@
         await sleep(2000);
         console.log("111");
         checkboxElement = document.querySelector('.before.prequeue.challenge'); // Check checkboxElement again
+        checkboxElement3 = document.querySelector('.queue.challenge');
+        checkboxElement2 = document.querySelector('.softblock');
         if (checkboxElement || checkboxElement2 || checkboxElement3) {
           setTimeout(startObservingMutations, 5000)
         }else{observer.disconnect()};
