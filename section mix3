@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix3
 // @namespace    http://tampermonkey.net/
-// @version      6.0
+// @version      8.0
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
@@ -139,13 +139,30 @@ function check_available() {
 
 
 
+function remove_adblock() {
+        var modalBackdrop = document.querySelector('div.modal-backdrop.fade.show');
+        if (modalBackdrop) {
+            modalBackdrop.remove();
+        }
+
+        setTimeout(function() {
+            var adblockModal = document.getElementById('adblockModal');
+            if (adblockModal) {
+                adblockModal.remove();
+            }
+        }, 1000); // Wait for 2 seconds before removing adblockModal
+    }
+
+
+
 
 
 
 
 setTimeout(function(){
-    check_available();
-    setTimeout(ticket_price, 5000);
-}, 5000);
+    remove_adblock();
+    setTimeout(check_available, 3000);
+    setTimeout(ticket_price, 7000);
+}, 7000);
 
 })();
