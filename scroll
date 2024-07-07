@@ -59,7 +59,7 @@
         checkboxElement = document.querySelector('.before.prequeue.challenge'); // Check checkboxElement again
         checkboxElement3 = document.querySelector('.queue.challenge');
         checkboxElement2 = document.querySelector('.softblock');
-        let checkboxElement4 = document.querySelector('.before.prequeue.challenge.queueit-enqueue-token-required');
+        checkboxElement4 = document.querySelector('.before.prequeue.challenge.queueit-enqueue-token-required');
 
         if (checkboxElement || checkboxElement2 || checkboxElement3 || checkboxElement4) {
           setTimeout(startObservingMutations, 5000)
