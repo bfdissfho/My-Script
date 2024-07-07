@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         scroll and softblock
 // @namespace    http://tampermonkey.net/
-// @version      5.0
+// @version      6.0
 // @description  My Tampermonkey script
 // @match        https://queue.ticketmaster.sg/*
 // @match        https://tixcraft.queue-it.net/*
+// @match        https://bookmyshowsg.queue-it.net/*
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/scroll
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/scroll
@@ -33,9 +34,10 @@
 
       let checkboxElement = document.querySelector('.before.prequeue.challenge');
       let checkboxElement2 = document.querySelector('.softblock');
+      let checkboxElement4 = document.querySelector('.before.prequeue.challenge.queueit-enqueue-token-required');
       let robot_btn = document.querySelector('.botdetect-button.btn');
     console.log("000");
-    if (checkboxElement || checkboxElement2 || checkboxElement3) {
+    if (checkboxElement || checkboxElement2 || checkboxElement3 || checkboxElement4) {
       let observer = new MutationObserver(async function(mutationsList) {
         for (let mutation of mutationsList) {
           if (mutation.addedNodes && mutation.addedNodes.length > 0) {
@@ -57,7 +59,9 @@
         checkboxElement = document.querySelector('.before.prequeue.challenge'); // Check checkboxElement again
         checkboxElement3 = document.querySelector('.queue.challenge');
         checkboxElement2 = document.querySelector('.softblock');
-        if (checkboxElement || checkboxElement2 || checkboxElement3) {
+        let checkboxElement4 = document.querySelector('.before.prequeue.challenge.queueit-enqueue-token-required');
+
+        if (checkboxElement || checkboxElement2 || checkboxElement3 || checkboxElement4) {
           setTimeout(startObservingMutations, 5000)
         }else{observer.disconnect()};
       });
