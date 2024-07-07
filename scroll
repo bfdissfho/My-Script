@@ -35,9 +35,10 @@
       let checkboxElement = document.querySelector('.before.prequeue.challenge');
       let checkboxElement2 = document.querySelector('.softblock');
       let checkboxElement4 = document.querySelector('.before.prequeue.challenge.queueit-enqueue-token-required');
+      const queue_id = document.getElementById('hlLinkToQueueTicket2');
       let robot_btn = document.querySelector('.botdetect-button.btn');
     console.log("000");
-    if (checkboxElement || checkboxElement2 || checkboxElement3 || checkboxElement4) {
+    if (checkboxElement || checkboxElement2 || checkboxElement3 || checkboxElement4 || queue_id.textContent.startsWith('0000')) {
       let observer = new MutationObserver(async function(mutationsList) {
         for (let mutation of mutationsList) {
           if (mutation.addedNodes && mutation.addedNodes.length > 0) {
@@ -60,8 +61,8 @@
         checkboxElement3 = document.querySelector('.queue.challenge');
         checkboxElement2 = document.querySelector('.softblock');
         checkboxElement4 = document.querySelector('.before.prequeue.challenge.queueit-enqueue-token-required');
-
-        if (checkboxElement || checkboxElement2 || checkboxElement3 || checkboxElement4) {
+          queue_id = document.getElementById('hlLinkToQueueTicket2');
+        if (checkboxElement || checkboxElement2 || checkboxElement3 || checkboxElement4 || queue_id.textContent.startsWith('0000')) {
           setTimeout(startObservingMutations, 5000)
         }else{observer.disconnect()};
       });
