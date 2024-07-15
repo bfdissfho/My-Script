@@ -1,11 +1,42 @@
 // ==UserScript==
 // @name         scroll and softblock
 // @namespace    http://tampermonkey.net/
-// @version      6.0
+// @version      7.0
 // @description  My Tampermonkey script
 // @match        https://queue.ticketmaster.sg/*
-// @match        https://tixcraft.queue-it.net/*
+// @match        https://sistic.queue-it.net/*
 // @match        https://bookmyshowsg.queue-it.net/*
+// @match        https://queue.ticketmaster.eu/*
+// @match        https://tixcraft.queue-it.net/*
+// @match        https://queue.puntoticket.com/*
+// @match        https://queue.ticketmaster.au/*
+// @match        https://queue.ticketmaster.be/*
+// @match        https://queue.ticketmaster.br/*
+// @match        https://queue.ticketmaster.ca/*
+// @match        https://queue.ticketmaster.com/*
+// @match        https://queue.ticketmaster.cz/*
+// @match        https://queue.ticketmaster.cl/*
+// @match        https://queue.ticketmaster.dk/*
+// @match        https://queue.ticketmaster.de/*
+// @match        https://queue.ticketmaster.es/*
+// @match        https://queue.ticketmaster.fr/*
+// @match        https://queue.ticketmaster.ie/*
+// @match        https://queue.ticketmaster.it/*
+// @match        https://queue.ticketmaster.cy/*
+// @match        https://queue.ticketmaster.com.mx/*
+// @match        https://queue.ticketmaster.nl/*
+// @match        https://queue.ticketmaster.co.nz/*
+// @match        https://queue.ticketmaster.no/*
+// @match        https://queue.ticketmaster.at/*
+// @match        https://queue.ticketmaster.pe/*
+// @match        https://queue.ticketmaster.pl/*
+// @match        https://queue.ticketmaster.co.za/*
+// @match        https://queue.ticketmaster.fi/*
+// @match        https://queue.ticketmaster.se/*
+// @match        https://queue.ticketmaster.ch/*
+// @match        https://queue.ticketmaster.ae/*
+// @match        https://queue.ticketmaster.co.uk/*
+// @match        https://queue.ticketmaster.gr/*
 // @grant        none
 // @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/scroll
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/scroll
