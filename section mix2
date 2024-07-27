@@ -159,10 +159,28 @@ function remove_adblock() {
 
 
 
+function promo_code(){
+
+    const checkCodeInput = document.getElementById('checkCode');
+
+    // Find the button element by its class
+    const submitButton = document.querySelector('.check-discount');
+
+    if (checkCodeInput && submitButton) {
+        // Fill in the input with '123'
+        checkCodeInput.value = '123';
+
+        // Trigger a click event on the button
+        submitButton.click();
+    }
+}
+
+
 
 
 setTimeout(function(){
     remove_adblock();
+    setTimeout(promo_code, 1000);
     setTimeout(check_available, 3000);
     setTimeout(ticket_price, 7000);
 }, 7000);
