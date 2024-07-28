@@ -47,7 +47,19 @@ function click_findticket() {
     }
 }
 
+function card_presale(){
+
+    const cardButton = document.querySelector('.btn.btn-outline-primary.col-12.mx-0.mb-2.action-btn');
+
+    if (cardButton) {
+
+        cardButton.click();
+    }
+
+}
+
     setTimeout(click_buyticket, 1000);
+    setTimeout(card_presale, 2000)
     setTimeout(click_buyticket, 7000);
     setTimeout(click_buyticket, 16000);
 
