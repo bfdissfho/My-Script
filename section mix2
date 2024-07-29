@@ -182,8 +182,8 @@ function promo_code(){
 setTimeout(function(){
     remove_adblock();
     setTimeout(promo_code, 1000);
-    setTimeout(check_available, 3000);
-    setTimeout(ticket_price, 7000);
+    setTimeout(check_available, 5000);
+    setTimeout(ticket_price, 9000);
 }, 7000);
 
 })();
