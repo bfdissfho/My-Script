@@ -8,6 +8,7 @@
 // @match        https://bookmyshowsg.queue-it.net/*
 // @match        https://queue.ticketmaster.eu/*
 // @match        https://tixcraft.queue-it.net/*
+// @match        https://thaiticketmajor.queue-it.net/*
 // @match        https://queue.puntoticket.com/*
 // @match        https://queue.ticketmaster.au/*
 // @match        https://queue.ticketmaster.be/*
