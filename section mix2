@@ -13,8 +13,8 @@
 
 //要改want_section和want_quan
 
-let want_section = ['field_PENA', 'field_PENB', 'field_309', 'field_310', 'field_311', 'field_312', 'field_313', 'field_333', 'field_332', 'field_331', 'field_330', 'field_329', 'field_328', 'field_314', 'field_320', 'field_322', 'field_319', 'field_323', 'field_318', 'field_324', 'field_222', 'field_221', 'field_223', 'field_220'];
-let want_quan = '8';
+let want_section = ['field_309', 'field_310', 'field_311', 'field_312', 'field_313', 'field_333', 'field_332', 'field_331', 'field_330', 'field_329', 'field_328', 'field_314', 'field_320', 'field_322', 'field_319', 'field_323', 'field_318', 'field_324', 'field_222', 'field_221', 'field_223', 'field_220', 'field_210', 'field_211', 'field_212', 'field_213', 'field_214', 'field_215', 'field_216', 'field_217', 'field_225', 'field_226', 'field_227', 'field_228', 'field_229', 'field_231', 'field_PA1', 'field_PB1', 'field_PA2', 'field_PB2', 'field_120', 'field_121', 'field_122'];
+let want_quan = '6';
 let promo_code_number = '512972'
 
 function section_click(elementSelector) {
