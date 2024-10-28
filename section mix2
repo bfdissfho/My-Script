@@ -169,7 +169,10 @@ function promo_code(){
 
     if (checkCodeInput && submitButton) {
         // Fill in the input with '123'
-        checkCodeInput.value = promo_code_number;
+        const randomCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
+        
+        // Fill in the input with the randomly selected promo code
+        checkCodeInput.value = randomCode;
 
         // Trigger a click event on the button
         submitButton.click();
