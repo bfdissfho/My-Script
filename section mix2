@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix2
 // @namespace    http://tampermonkey.net/
-// @version      2024.10.20
+// @version      2024.10.28
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
@@ -15,7 +15,7 @@
 
 let want_section = ['field_331', 'field_332', 'field_333', 'field_330', 'field_329', 'field_311', 'field_312', 'field_310', 'field_309', 'field_313', 'field_328', 'field_314', 'field_320', 'field_322', 'field_323', 'field_319', 'field_318', 'field_324', 'field_221', 'field_220', 'field_222', 'field_223', 'field_219', 'field_223', 'field_218', 'field_224', 'field_211', 'field_212', 'field_210', 'field_213', 'field_209', 'field_214', 'field_231', 'field_229', 'field_233', 'field_228', 'field_227', 'field_226', 'field_225', 'field_216', 'field_217', 'field_PA1', 'field_PC1', 'field_PB2', 'field_PA2', 'field_PC2', 'field_110', 'field_111', 'field_109', 'field_112', 'field_132', 'field_131', 'field_130', 'field_133', 'field_113', 'field_129', 'field_128', 'field_114' ];
 let want_quan = '4';
-let promo_code_number = '512972'
+let promo_code_number = ['512972']
 
 function section_click(elementSelector) {
     const section = document.querySelector(elementSelector);
