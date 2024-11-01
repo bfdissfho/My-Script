@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         scroll and softblock
 // @namespace    http://tampermonkey.net/
-// @version      2024-10-4
+// @version      2024-11-1
 // @description  My Tampermonkey script
 // @match        https://queue.ticketmaster.sg/*
 // @match        https://sistic.queue-it.net/*
