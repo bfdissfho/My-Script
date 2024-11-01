@@ -10,6 +10,7 @@
 // @match        https://tixcraft.queue-it.net/*
 // @match        https://thaiticketmajor.queue-it.net/*
 // @match        https://queue.puntoticket.com/*
+// @match        https://ticketeklounge.ticketek.com.au/*
 // @match        https://queue.ticketmaster.au/*
 // @match        https://queue.ticketmaster.be/*
 // @match        https://queue.ticketmaster.br/*
