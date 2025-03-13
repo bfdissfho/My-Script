@@ -49,12 +49,15 @@ function click_findticket() {
 
 function card_presale(){
 
-    const cardButton = document.querySelector('.btn.btn-outline-primary.col-12.mx-0.mb-2.action-btn');
+    const liElements = document.querySelectorAll('li.buy');
 
-    if (cardButton) {
+    liElements.forEach(function(liElement) {
+        const aTag = liElement.querySelector('a');
 
-        cardButton.click();
-    }
+        if (aTag && aTag.href.includes('https://ticketmaster.sg/ticket/area/')) {
+            aTag.click();
+        }
+    });
 
 }
 
