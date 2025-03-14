@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix2
 // @namespace    http://tampermonkey.net/
-// @version      2024.10.28
+// @version      2025.3.14
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
@@ -11,10 +11,9 @@
 
 (function() {
 
-//要改want_section和want_quan
+//要改want_section
 
 let want_section = ['field_PA1', 'field_PA4', 'field_PB2', 'field_PB1', 'field_PB3', 'field_221', 'field_220', 'field_222', 'field_223', 'field_219', 'field_223', 'field_218', 'field_224', 'field_331', 'field_332', 'field_330', 'field_329', 'field_311', 'field_312', 'field_310', 'field_313', 'field_328', 'field_314', 'field_320', 'field_322', 'field_323', 'field_319', 'field_318', 'field_324', 'field_211', 'field_212', 'field_210', 'field_213', 'field_214', 'field_231', 'field_229', 'field_228', 'field_227', 'field_226', 'field_225', 'field_216', 'field_217'];
-let want_quan = '8';
 let promo_code_number = ['512972']
 
 function section_click(elementSelector) {
@@ -56,27 +55,24 @@ function click_section(field){
 
 
 
-// detect changes in ticket price element
-function ticket_price(){
-    let ticketPriceElement = document.querySelector('.w100.form-select');
-    console.log("Element:", ticketPriceElement);
-    const valueToSelect = want_quan;
+    function ticket_price(){
 
-    // Find the index of the option with the specified value
-    let optionIndex = Array.from(ticketPriceElement.options).findIndex(option => option.value === valueToSelect);
-    console.log("Option Index:", optionIndex);
+        let ticketPriceElement = document.querySelector('.w100.form-select');
+        console.log("Element:", ticketPriceElement);
 
-    // If the option with the specified value exists, select it
-    if (optionIndex !== -1) {
-    ticketPriceElement.selectedIndex = optionIndex;
-    console.log("Selected Option:", ticketPriceElement.value);
+        // 選取最後一個 option 的索引
+        const lastIndex = ticketPriceElement.options.length - 1;
+        ticketPriceElement.selectedIndex = lastIndex;
+        console.log("Selected Last Option Value:", ticketPriceElement.value);
+
+        const bestAvailableButton = document.getElementById("autoMode");
+        if (bestAvailableButton) {
+            bestAvailableButton.click();
+            console.log("Confirm button clicked.");
+        } else {
+            console.log("Confirm button not found.");
+        }
     }
-
-
-    // Confirm button
-    const bestAvailableButton = document.getElementById("autoMode");
-    bestAvailableButton.click();
-}
 
 
 function check_available() {
