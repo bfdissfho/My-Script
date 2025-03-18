@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         buyticket findticket
 // @namespace    http://tampermonkey.net/
-// @version      2025-3-14
+// @version      2025-3-18
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/activity/detail/*
 // @match        https://ticketmaster.sg/activity/game/*
@@ -58,13 +58,16 @@ function card_presale(){
         if (aTag && aTag.href.includes('https://ticketmaster.sg/ticket/area/')) {
             aTag.click();
         }
+        if (aTag && aTag.href.includes('https://ticketmaster.sg/activity/game/')) {
+            aTag.click();
+        }
     });
 
 }
+
     function url_game(){
         if (window.location.href.includes('https://ticketmaster.sg/activity/game/')) {
-            let targetElement = document.querySelector('a.btn.btn-primary.text-bold.m-0[href*="https://abc123.sg/ticket/area"]');
-
+            let targetElement = document.querySelector('a.btn.btn-primary.text-bold.m-0[href*="https://ticketmaster.sg/ticket/area"]');
             if (targetElement) {
                 targetElement.click();
             }
