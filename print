@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         print at home
 // @namespace    http://tampermonkey.net/
-// @version      1.0
+// @version      2025-3-20
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/checkout
 // @grant        none
@@ -30,7 +30,12 @@
                     options[i].selected = true;
                     break;
                     }
+                if (options[i].text === 'Ticket Delivery Delay') {
+                    options[i].selected = true;
+                    break;
+                    }
                 }
+
             }
         }
     function secure_ticket(){
