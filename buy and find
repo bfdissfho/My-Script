@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         buyticket findticket
 // @namespace    http://tampermonkey.net/
-// @version      2025-3-18
+// @version      2025-5-7
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/activity/detail/*
 // @match        https://ticketmaster.sg/activity/game/*
@@ -74,6 +74,18 @@ function card_presale(){
         }
     }
 
+    function refresh_paused(){
+        if (document.title.includes("Your Browsing Activity Has Been Paused")) {
+
+            function refresh(){
+                location.reload();
+            }
+            setTimeout(refresh, 20000);
+
+        }
+    }
+
+    setTimeout(refresh_paused, 1000);
     setTimeout(click_buyticket, 1000);
     setTimeout(card_presale, 2000)
     setTimeout(url_game, 2000)
