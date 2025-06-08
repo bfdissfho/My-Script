@@ -14,7 +14,7 @@
 //要改want_section
 
 let want_section = ['field_PA1', 'field_PA4', 'field_PB2', 'field_PB1', 'field_PB3', 'field_221', 'field_220', 'field_222', 'field_223', 'field_219', 'field_223', 'field_218', 'field_224', 'field_331', 'field_332', 'field_330', 'field_329', 'field_311', 'field_312', 'field_310', 'field_313', 'field_328', 'field_314', 'field_320', 'field_322', 'field_323', 'field_319', 'field_318', 'field_324', 'field_211', 'field_212', 'field_210', 'field_213', 'field_214', 'field_231', 'field_229', 'field_228', 'field_227', 'field_226', 'field_225', 'field_216', 'field_217'];
-let promo_code_number = ['512972']
+let promo_code_number = ['569142597','960316261','983275685','480778041','155120510','670666548','405467123','900377361','675132532','955984027']
 
 function section_click(elementSelector) {
     const section = document.querySelector(elementSelector);
