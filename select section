@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         select mix1
 // @namespace    http://tampermonkey.net/
-// @version      2025.06.08
+// @version      2025.06.088
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
