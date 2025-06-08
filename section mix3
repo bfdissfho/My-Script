@@ -156,18 +156,11 @@ function remove_adblock() {
 function promo_code(){
 
     const checkCodeInput = document.getElementById('checkCode');
-
-    // Find the button element by its class
     const submitButton = document.querySelector('.check-discount');
 
     if (checkCodeInput && submitButton) {
-        // Fill in the input with '123'
         const randomCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
-        
-        // Fill in the input with the randomly selected promo code
         checkCodeInput.value = randomCode;
-
-        // Trigger a click event on the button
         submitButton.click();
     }
 }
