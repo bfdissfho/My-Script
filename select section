@@ -153,13 +153,12 @@ function remove_adblock() {
 
 
 function promo_code(){
-
     const checkCodeInput = document.getElementById('checkCode');
     const submitButton = document.querySelector('.check-discount');
-
     if (checkCodeInput && submitButton) {
         const randomCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
-        checkCodeInput.value = randomCode;
+        const finalCode = 'BB' + randomCode; 
+        checkCodeInput.value = finalCode; // 使用 finalCode
         submitButton.click();
     }
 }
