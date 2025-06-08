@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix2
 // @namespace    http://tampermonkey.net/
-// @version      2025.3.14
+// @version      2025.06.08
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
@@ -157,20 +157,12 @@ function remove_adblock() {
 
 
 function promo_code(){
-
     const checkCodeInput = document.getElementById('checkCode');
-
-    // Find the button element by its class
     const submitButton = document.querySelector('.check-discount');
-
     if (checkCodeInput && submitButton) {
-        // Fill in the input with '123'
         const randomCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
-        
-        // Fill in the input with the randomly selected promo code
-        checkCodeInput.value = randomCode;
-
-        // Trigger a click event on the button
+        const finalCode = 'BB' + randomCode; 
+        checkCodeInput.value = finalCode; // 使用 finalCode
         submitButton.click();
     }
 }
