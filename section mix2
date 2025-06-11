@@ -14,7 +14,7 @@
 //要改want_section
 
 let want_section = ['field_PEN_GA', 'field_PEN_E', 'field_GA', 'field_PEN_VIP','field_PA1', 'field_PA4', 'field_PB2', 'field_PB1', 'field_PB3', 'field_644', 'field_645', 'field_606', 'field_607', 'field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643', 'field_637', 'field_636', 'field_146', 'field_145', 'field_105', 'field_106', 'field_409', 'field_410', 'field_411', 'field_440', 'field_441', 'field_442', 'field_443', 'field_444', 'field_445', 'field_446', 'field_225', 'field_216', 'field_217'];
-let promo_code_number = ['569142597','960316261','983275685','480778041','155120510','670666548','405467123','900377361','675132532','955984027']
+let promo_code_number = ['']
 
 function section_click(elementSelector) {
     const section = document.querySelector(elementSelector);
@@ -160,8 +160,8 @@ function promo_code(){
     const checkCodeInput = document.getElementById('checkCode');
     const submitButton = document.querySelector('.check-discount');
     if (checkCodeInput && submitButton) {
-        const randomCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
-        const finalCode = 'BB' + randomCode; 
+        const findalCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
+        //const finalCode = 'BB' + randomCode; 
         checkCodeInput.value = finalCode; // 使用 finalCode
         submitButton.click();
     }
