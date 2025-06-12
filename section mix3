@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix3
 // @namespace    http://tampermonkey.net/
-// @version      2025.06.121
+// @version      2025.06.122
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
@@ -9,169 +9,136 @@
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/section%20mix3
 // ==/UserScript==
 
-(function() {
 
-//要改want_section
+(function () {
+    'use strict';
 
-let want_section = ['field_PEN_VIP','field_PA1', 'field_PA4', 'field_PB2', 'field_PB1', 'field_PB3', 'field_PEN_GA', 'field_PEN_E', 'field_GA', 'field_644', 'field_645', 'field_606', 'field_607', 'field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643', 'field_637', 'field_636', 'field_146', 'field_145', 'field_105', 'field_106', 'field_409', 'field_410', 'field_411', 'field_440', 'field_441', 'field_442', 'field_443', 'field_444', 'field_445', 'field_446', 'field_225', 'field_216', 'field_217'];
-let promo_code_number = ['']
+    let want_section = ['field_PEN_VIP','field_PA1', 'field_PA4', 'field_PB2', 'field_PB1', 'field_LS_B', 'field_PEN_GA', 'field_PEN_E', 'field_GA', 'field_US_D', 'field_645', 'field_606', 'field_607', 'field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643', 'field_637', 'field_636', 'field_146', 'field_145', 'field_105', 'field_106', 'field_409', 'field_410', 'field_411', 'field_440', 'field_441', 'field_442', 'field_443', 'field_444', 'field_445', 'field_446', 'field_225', 'field_216', 'field_217'];
+    let promo_code_number = [''];
 
-function section_click(elementSelector) {
-    const section = document.querySelector(elementSelector);
-    // Create a new click event
-    const clickEvent = new MouseEvent("click", {
-      view: window,
-      bubbles: true,
-      cancelable: true,
-    });
-    // Dispatch the click event on the element
-    if (section) {
-      section.dispatchEvent(clickEvent);
-    }
-  }
-
-
-function click_section(field){
-    let section1 = "#" + field + ">g:nth-of-type(1)>polygon"
-    let section2 = "#" + field + ">g:nth-of-type(1)>path"
-    console.log(section1)
-    console.log(section2)
-
-    let section3 = document.querySelector(section1);
-    let section4 = document.querySelector(section2);
-    console.log(section3)
-    console.log(section4)
-    if (section3) {
-    console.log("222");
-    section_click(section1);
-
-
-    } else if (section4) {
-    console.log("333");
-    section_click(section2);
-
-    }
-}
-
-
-
-    function ticket_price(){
-
-        let ticketPriceElement = document.querySelector('.w100.form-select');
-        console.log("Element:", ticketPriceElement);
-
-        // 選取最後一個 option 的索引
-        const lastIndex = ticketPriceElement.options.length - 1;
-        ticketPriceElement.selectedIndex = lastIndex;
-        console.log("Selected Last Option Value:", ticketPriceElement.value);
-
-        const bestAvailableButton = document.getElementById("autoMode");
-        if (bestAvailableButton) {
-            bestAvailableButton.click();
-            console.log("Confirm button clicked.");
-        } else {
-            console.log("Confirm button not found.");
+    function section_click(elementSelector) {
+        const section = document.querySelector(elementSelector);
+        if (section) {
+            const clickEvent = new MouseEvent("click", {
+                view: window,
+                bubbles: true,
+                cancelable: true,
+            });
+            section.dispatchEvent(clickEvent);
         }
     }
 
+    function click_section(field) {
+        let section1 = "#" + field + ">g:nth-of-type(1)>polygon";
+        let section2 = "#" + field + ">g:nth-of-type(1)>path";
+        let section3 = document.querySelector(section1);
+        let section4 = document.querySelector(section2);
 
-function check_available() {
+        if (section3) {
+            console.log("Clicking polygon section");
+            section_click(section1);
+        } else if (section4) {
+            console.log("Clicking path section");
+            section_click(section2);
+        }
+    }
 
+    function ticket_price_loop() {
+        const intervalId = setInterval(() => {
+            let ticketPriceElement = document.querySelector('.w100.form-select');
+            if (ticketPriceElement) {
+                clearInterval(intervalId);
+                console.log("Ticket price select found:", ticketPriceElement);
+                const lastIndex = ticketPriceElement.options.length - 1;
+                ticketPriceElement.selectedIndex = lastIndex;
+                console.log("Selected Last Option:", ticketPriceElement.value);
 
+                const bestAvailableButton = document.getElementById("autoMode");
+                if (bestAvailableButton) {
+                    bestAvailableButton.click();
+                    console.log("Confirm button clicked.");
+                } else {
+                    console.log("Confirm button not found.");
+                }
+            }
+        }, 1000);
+    }
+
+    function check_available_loop() {
+        const intervalId = setInterval(() => {
             const scriptElements = document.querySelectorAll("#mapSelectArea script");
-
-            // Check if the fourth <script> element exists
             if (scriptElements.length >= 4) {
-                // Access the content of the fourth <script> element using index 3 (since it's a 0-based index)
+                clearInterval(intervalId);
                 const fourthScriptContent = scriptElements[3].textContent;
-
-                // Use a regular expression to find the 'var zone' object
                 const regex = /var zone = ({[^]*?"}]}})/;
                 const match = fourthScriptContent.match(regex);
 
                 if (match) {
-                const zoneObjectString = match[1];
+                    const zoneObjectString = match[1];
+                    const zoneObject = JSON.parse(zoneObjectString);
 
-                // Convert the extracted 'var zone' object to a JavaScript object using JSON.parse
-                const zoneObject = JSON.parse(zoneObjectString);
+                    for (const fieldCode of want_section) {
+                        const fieldData = zoneObject[fieldCode];
+                        if (fieldData) {
+                            const areaStatus = fieldData.areaStatus;
+                            console.log(`${fieldCode} area status: ${areaStatus}`);
 
-                //因為有時同一個section分成兩個價錢，而唔一定係全部level 300，可以只係部分
-                // List of field codes to check
-                const fieldsToCheck = want_section;
-
-// Loop through the list of fields and check their areaStatus
-                for (const fieldCode of fieldsToCheck) {
-                    const fieldData = zoneObject[fieldCode];
-                    if (fieldData) {
-                    const areaStatus = fieldData.areaStatus;
-                    console.log(`${fieldCode} area status: ${areaStatus}`);
-
-                    // Take an action based on areaStatus
-                    if (areaStatus === "AVAILABLE") {
-                        // Perform your action here for available areas
-                        console.log(`Action for ${fieldCode} when AVAILABLE`);
-                        //console.log(fieldCode);
-                        setTimeout(click_section(fieldCode), 5000);
-                        break;
-
-                    } else if (areaStatus === "SINGLE SEATS") {
-                        // Perform your action here for single seat areas
-                        console.log(`Action for ${fieldCode} when SINGLE SEATS`);
-                    } else if (areaStatus === "UNAVAILABLE") {
-                        // Perform your action here for unavailable areas
-                        console.log(`Action for ${fieldCode} when UNAVAILABLE`);
+                            if (areaStatus === "AVAILABLE") {
+                                setTimeout(() => click_section(fieldCode), 500);
+                                break;
+                            }
+                        }
                     }
-                    } else {
-                    console.log(`${fieldCode} not found in the 'var zone' information.`);
-                    }
-                }
                 } else {
-                console.log("The 'var zone' information was not found.");
+                    console.log("The 'var zone' information was not found.");
                 }
-            } else {
-                console.log("The fourth <script> element does not exist.");
             }
+        }, 1000);
+    }
+
+    function remove_adblock_loop() {
+        const intervalId = setInterval(() => {
+            const modalBackdrop = document.querySelector('div.modal-backdrop.fade.show');
+            const adblockModal = document.getElementById('adblockModal');
+
+            let removedSomething = false;
+
+            if (modalBackdrop) {
+                modalBackdrop.remove();
+                console.log("modalBackdrop removed.");
+                removedSomething = true;
             }
 
-
-
-
-function remove_adblock() {
-        var modalBackdrop = document.querySelector('div.modal-backdrop.fade.show');
-        if (modalBackdrop) {
-            modalBackdrop.remove();
-        }
-
-        setTimeout(function() {
-            var adblockModal = document.getElementById('adblockModal');
             if (adblockModal) {
                 adblockModal.remove();
+                console.log("adblockModal removed.");
+                removedSomething = true;
             }
-        }, 1000); // Wait for 2 seconds before removing adblockModal
+
+            if (!document.querySelector('div.modal-backdrop.fade.show') &&
+                !document.getElementById('adblockModal') &&
+                removedSomething) {
+                clearInterval(intervalId);
+                console.log("All adblock-related modals removed. Stopping loop.");
+            }
+        }, 1000);
     }
 
-
-
-
-function promo_code(){
-    const checkCodeInput = document.getElementById('checkCode');
-    const submitButton = document.querySelector('.check-discount');
-    if (checkCodeInput && submitButton) {
-        const finalCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
-        //const finalCode = 'BB' + randomCode; 
-        checkCodeInput.value = finalCode; // 使用 finalCode
-        submitButton.click();
+    function promo_code() {
+        const checkCodeInput = document.getElementById('checkCode');
+        const submitButton = document.querySelector('.check-discount');
+        if (checkCodeInput && submitButton) {
+            const finalCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
+            checkCodeInput.value = finalCode;
+            submitButton.click();
+        }
     }
-}
 
-
-
-
-setTimeout(function(){
-    remove_adblock();
-    setTimeout(promo_code, 1000);
-    setTimeout(check_available, 5000);
-    setTimeout(ticket_price, 9000);
-}, 7000);
-
+    // 啟動所有功能流程
+    setTimeout(() => {
+        remove_adblock_loop();
+        setTimeout(promo_code, 500);
+        setTimeout(check_available_loop, 500);
+        setTimeout(ticket_price_loop, 2000);
+    }, 500);
 })();
