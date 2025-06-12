@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         website capture
 // @namespace    http://tampermonkey.net/
-// @version      2025.06.12
+// @version      2025.06.121
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/check-captcha/*
 // @grant        none
@@ -47,5 +47,5 @@
   }
 
   // Call the function
-  setTimeout(website_capture, 5000);
+  website_capture();
 })();
