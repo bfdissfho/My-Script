@@ -157,7 +157,7 @@ function promo_code(){
     const checkCodeInput = document.getElementById('checkCode');
     const submitButton = document.querySelector('.check-discount');
     if (checkCodeInput && submitButton) {
-        const findalCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
+        const finalCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
         //const finalCode = 'BB' + randomCode; 
         checkCodeInput.value = finalCode; // 使用 finalCode
         submitButton.click();
