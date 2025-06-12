@@ -29,7 +29,7 @@
     let observer = new MutationObserver(function(mutationsList) {
       for (let mutation of mutationsList) {
         if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-          let anticapture_solve = document.querySelector('div.antigate_solver.solved');
+        let anticapture_solve = document.querySelector('div.ddddocr_solver.solved, div.antigate_solver.solved');
           if (anticapture_solve) {
             console.log("123")
             observer.disconnect();
