@@ -1,12 +1,12 @@
 // ==UserScript==
-// @name         section mix3
+// @name         section mix2
 // @namespace    http://tampermonkey.net/
 // @version      2025.06.122
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/area/*
 // @grant        none
-// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/section%20mix3
-// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/section%20mix3
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/section%20mix2
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/section%20mix2
 // ==/UserScript==
 
 
