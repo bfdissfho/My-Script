@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         website capture
 // @namespace    http://tampermonkey.net/
-// @version      3.0
+// @version      2025.06.12
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/ticket/check-captcha/*
 // @grant        none
@@ -33,7 +33,7 @@
           if (anticapture_solve) {
             console.log("123")
             observer.disconnect();
-            setTimeout(click_button, 3000)
+            setTimeout(click_button, 500)
             // Simulate clicking the button after a 5-second delay
               // 5-second delay
             }
