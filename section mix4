@@ -1,0 +1,302 @@
+// ==UserScript==
+// @name          section mix4
+// @namespace     http://tampermonkey.net/
+// @version       2025.06.15
+// @description   no
+// @author        you
+// @match         https://ticketmaster.sg/ticket/area/*
+// @grant         none
+// ==/UserScript==
+
+
+(function() {
+    'use strict';
+
+
+    const promo_code_number = ['']
+
+
+
+    // --- 配置 ---
+    // 更新為你提供的嵌套列表結構
+    const want_section = [
+        ['field_PEN_VIP', 'field_PEN_BLINK', 'field_VIP', 'field_VIP_GA'],
+        ['field_PA5','field_PA3', 'field_PB4','field_PB3','field_PB5','field_PA4', 'field_PA2','field_PB2','field_PB6','field_PA1', 'field_PA6', 'field_PA7', 'field_PA8', 'field_PA9', 'field_PA10', 'field_PB1', 'field_PB7', 'field_PB8', 'field_PB9', 'field_PB10', 'field_PC1', 'field_PC2', 'field_PC3', 'field_PC4', 'field_PC5', 'field_PC6', 'field_PC7', 'field_PC8', 'field_PC9', 'field_PC10', 'field_PD1', 'field_PD2', 'field_PD3', 'field_PD4', 'field_PD5', 'field_PD6', 'field_PD7', 'field_PD8', 'field_PD9', 'field_PD10'],
+        ['field_PEN_GA', 'field_PEN_E','field_GA',],
+        ['field_606','field_607','field_645','field_644',],
+        ['field_101','field_102','field_103','field_104','field_147','field_148','field_149','field_150',],
+        ['field_105','field_106','field_107A','field_107B','field_146','field_145','field_144A','field_144B'],
+        ['field_111','field_110','field_109','field_140','field_141','field_142','field_116','field_115','field_114','field_113','field_112','field_135','field_136','field_137','field_137','field_138','field_139','field_636', 'field_637', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643','field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_614', 'field_615'],
+        ['field_405', 'field_406', 'field_407', 'field_408', 'field_409', 'field_410', 'field_411','field_440', 'field_441', 'field_442', 'field_443', 'field_444', 'field_445', 'field_446',],
+        ['field_412','field_413','field_414','field_415','field_436','field_437','field_438','field_439',],
+
+
+
+
+        ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
+        ['field_320','field_319','field_318','field_322','field_323','field_324',],
+        ['field_216','field_217','field_226','field_225',],
+        ['field_209','field_233','field_221','field_220','field_222',],
+        ['field_214','field_215','field_228','field_227'],
+        ['field_223','field_224','field_219','field_218','field_210','field_211','field_212','field_213','field_229','field_230','field_231','field_232',],
+
+
+
+        ["field_LS_A","field_LS_B","field_LS_C"],
+        ["field_US_A","field_US_B","field_US_C"],
+        ["field_C1_A","field_C1_B","field_C1_H","field_C1_F","field_C1_G","field_C1_D","field_C1_E","field_C1_C","field_C2_A","field_C2_K","field_C2_J","field_C2_G","field_C2_H","field_C2_E","field_C2_F","field_C2_C","field_C2_D","field_C2_B"],
+
+
+        ["field_A_B","field_A_DP","field_B_B","field_B_DP","field_C_B","field_C_DP",],
+        ["field_Q","field_S","field_P_A","field_P_B","field_H_B","field_H_A","field_J_B","field_J_A","field_K","field_G","field_U"],
+        ["field_V_A","field_V_B","field_L_B","field_L_A","field_M_A","field_M_B","field_N","field_D","field_BOXA","field_E","field_F","field_BOXC","field_R","field_T"],
+
+
+
+        ["field_STALLS_C","field_STALLS_B","field_STALLS_A","field_STALLS_D","field_STALLS_E"],
+        ["field_BALC2_A","field_BALC2_C","field_BALC2_B","field_BALC2_D","field_BALC1_G","field_BALC1_H","field_BALC1_I","field_BALC1_J","field_BALC1_F","field_BALC1_E","field_BALC1_B","field_BALC1_A","field_BALC1_D","field_BALC1_C",],
+
+
+
+        ["field_S_A","field_S_B","field_S_C",],
+        ["field_D_C","field_D_B","field_D_A",],
+        ["field_UC_B","field_UC_A","field_UC_D","field_UC_C","field_UC_F","field_UC_E",],
+
+
+    ];
+
+
+    const B_PAGE_WINDOW_NAME = 'BPageWindow'; // B 頁面固定窗口名稱
+    const LOCAL_STORAGE_REQUEST_KEY = 'bPageDataRequest'; // A 到 B 的請求鍵
+    const LOCAL_STORAGE_DATA_KEY = 'bPageAreaData'; // B 到 A 的數據鍵
+
+    let bPageWindow = null;
+    let dataProcessedOnce = false; // 標誌：確保每個 A 頁面加載只處理一次數據
+
+    // --- 你提供的輔助函數 ---
+    function section_click(elementSelector) {
+        const section = document.querySelector(elementSelector);
+        if (section) {
+            const clickEvent = new MouseEvent("click", {
+                view: window,
+                bubbles: true,
+                cancelable: true,
+            });
+            section.dispatchEvent(clickEvent);
+            // console.log(`Clicked on section: ${elementSelector}`); // 由於 click_section 內部已有很多日誌，這裡可以選擇性保留
+            return true; // 表示點擊成功
+        }
+        return false; // 表示未找到元素或點擊失敗
+    }
+
+    function click_section(field) {
+        let section1 = "#" + field + ">g:nth-of-type(1)>polygon";
+        let section2 = "#" + field + ">g:nth-of-type(1)>path";
+        let findInterval; // 用來保存 setInterval 的 ID
+        let attempts = 0; // 新增：用於計數嘗試次數，可選
+        const maxRetries = 20; // 新增：最大重試次數，約 10 秒
+        const retryIntervalMs = 500; // 新增：重試間隔毫秒
+
+        const tryToFindSections = () => {
+            attempts++;
+            let section3 = document.querySelector(section1);
+            let section4 = document.querySelector(section2);
+
+            if (section3) {
+                console.log(`找到 polygon section (${field}), 點擊並清除定時器 (嘗試 ${attempts} 次)`);
+                clearInterval(findInterval); // 找到後清除定時器
+                section_click(section1);
+                ticket_price_loop();
+            } else if (section4) {
+                console.log(`找到 path section (${field}), 點擊並清除定時器 (嘗試 ${attempts} 次)`);
+                clearInterval(findInterval); // 找到後清除定時器
+                section_click(section2);
+                ticket_price_loop();
+            } else {
+                console.log(`尚未找到 ${field} 的 section (polygon 或 path)，繼續尋找... (第 ${attempts} 次嘗試)`);
+                if (attempts >= maxRetries) {
+                    clearInterval(findInterval);
+                    console.warn(`點擊區域 ${field} 超時，已達到最大重試次數 (${maxRetries})。`);
+                }
+            }
+        };
+
+        // 每隔 500 毫秒嘗試尋找一次
+        findInterval = setInterval(tryToFindSections, retryIntervalMs);
+    }
+    // --- 輔助函數 (未變更) ---
+    function ticket_price_loop() {
+        const intervalId = setInterval(() => {
+            let ticketPriceElement = document.querySelector('.w100.form-select');
+            if (ticketPriceElement) {
+                clearInterval(intervalId);
+                console.log("Ticket price select found:", ticketPriceElement);
+                const lastIndex = ticketPriceElement.options.length - 1;
+                ticketPriceElement.selectedIndex = lastIndex;
+                console.log("Selected Last Option:", ticketPriceElement.value);
+
+                const bestAvailableButton = document.getElementById("autoMode");
+                if (bestAvailableButton) {
+                    bestAvailableButton.click();
+                    console.log("Confirm button clicked.");
+                } else {
+                    console.log("Confirm button not found.");
+                }
+            }
+        }, 1000);
+    }
+
+    function remove_adblock_loop() {
+        const intervalId = setInterval(() => {
+            const modalBackdrop = document.querySelector('div.modal-backdrop.fade.show');
+            const adblockModal = document.getElementById('adblockModal');
+
+            let removedSomething = false;
+
+            if (modalBackdrop) {
+                modalBackdrop.remove();
+                console.log("modalBackdrop removed.");
+                removedSomething = true;
+            }
+
+            if (adblockModal) {
+                adblockModal.remove();
+                console.log("adblockModal removed.");
+                removedSomething = true;
+            }
+
+            if (!document.querySelector('div.modal-backdrop.fade.show') &&
+                !document.getElementById('adblockModal') &&
+                removedSomething) {
+                clearInterval(intervalId);
+                console.log("All adblock-related modals removed. Stopping loop.");
+            }
+        }, 1000);
+    }
+
+    function promo_code() {
+        const checkCodeInput = document.getElementById('checkCode');
+        const submitButton = document.querySelector('.check-discount');
+        if (checkCodeInput && submitButton) {
+            const finalCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
+            checkCodeInput.value = finalCode;
+            submitButton.click();
+        }
+    }
+
+    // --- A 頁面核心邏輯：從 localStorage 獲取數據並根據新規則處理 ---
+    function process_available_areas(areaDataFromB) {
+        // 只有當尚未處理數據時才執行，防止重複處理
+        if (dataProcessedOnce) {
+            console.log("A 頁面：數據已在此加載中處理過。跳過重新處理。");
+            return;
+        }
+        console.log("A 頁面：開始處理來自 B 頁面的可用區域數據。", areaDataFromB);
+
+        let foundAvailableAreaInAnyList = false;
+
+        // 遍歷 want_section 中的每個子列表
+        for (const subList of want_section) {
+            const availableAreasInSubList = [];
+            const matchedAreasCount = []; // 用於計算分母：在 B 頁面數據中找到的區域數
+
+            // 檢查當前子列表中的每個區域
+            for (const wantedField of subList) {
+                const matchingArea = areaDataFromB.find(item => item.sectionCode === wantedField);
+
+                if (matchingArea) {
+                    console.log(`${wantedField} area status: ${matchingArea.areaStatus}`);
+                    matchedAreasCount.push(wantedField); // 如果在 B 頁面數據中找到，就計入分母
+                    if (matchingArea.areaStatus === "AVAILABLE") {
+                        availableAreasInSubList.push(wantedField);
+                    }
+                } else {
+                    // 即使未找到，也會日誌提醒，但不計入分母
+                    console.log(`B 頁面數據中未找到 ${wantedField} 的信息，將不計入比例計算。`);
+                }
+            }
+
+            // 只有當有實際匹配到的區域時才進行判斷
+            if (matchedAreasCount.length > 0) {
+                // 判斷可用區域是否超過實際匹配區域的一半
+                if (availableAreasInSubList.length >= matchedAreasCount.length / 2) {
+                    // 如果超過一半可用，則從可用區域中隨機選擇一個
+                    const randomIndex = Math.floor(Math.random() * availableAreasInSubList.length);
+                    const selectedArea = availableAreasInSubList[randomIndex];
+
+                    console.log(`找到符合條件的子列表 [${subList.join(', ')}] (匹配區域數: ${matchedAreasCount.length}, 可用區域數: ${availableAreasInSubList.length})。從中隨機選擇可用區域: ${selectedArea}，開始點擊流程。`);
+                    click_section(selectedArea);
+                    foundAvailableAreaInAnyList = true;
+                    break; // 找到並點擊後就停止檢查其他子列表
+                } else {
+                    console.log(`子列表 [${subList.join(', ')}] 可用區域 (${availableAreasInSubList.length}) 不足實際匹配區域 (${matchedAreasCount.length}) 的一半，繼續檢查下一個列表。`);
+                }
+            } else {
+                console.log(`子列表 [${subList.join(', ')}] 在 B 頁面數據中沒有任何匹配區域，跳過此列表。`);
+            }
+        }
+
+        if (!foundAvailableAreaInAnyList) {
+            console.log("A 頁面：所有想找的區域在所有列表中都不可用，或不符合超過半數可用的條件。");
+        }
+        dataProcessedOnce = true; // 標記數據已處理
+    }
+
+    // --- 啟動流程 ---
+    window.addEventListener('load', function() {
+        console.log("A 頁面加載完成。");
+
+        // 每次 A 頁面加載時，清除上次的數據，確保獲取最新數據
+        localStorage.removeItem(LOCAL_STORAGE_DATA_KEY);
+        console.log("A 頁面：已清除 localStorage 中的舊數據。");
+        dataProcessedOnce = false; // 重置數據處理標誌
+
+        remove_adblock_loop();
+        //promo_code()
+
+        // 1. 動態計算 B 頁面 URL
+        const currentUrl = window.location.href;
+        const bPageUrl = currentUrl.replace('/ticket/area/', '/ticket/get-area-map/');
+        console.log(`動態生成的 B 頁面 URL: ${bPageUrl}`);
+
+        // 2. 打開或聚焦 B 頁面
+        bPageWindow = window.open(bPageUrl, B_PAGE_WINDOW_NAME);
+
+        if (bPageWindow) {
+            // bPageWindow.focus(); // 如果你希望 B 頁面始終置於前景，可以取消註釋此行
+            console.log("已嘗試打開或聚焦 B 頁面。");
+
+            // 通過 localStorage 向 B 頁面發送數據請求
+            // 設置一個新的時間戳，觸發 B 頁面的 storage 事件，使其重新發送數據
+            localStorage.setItem(LOCAL_STORAGE_REQUEST_KEY, Date.now().toString());
+            console.log("A 頁面：已通過 localStorage 向 B 頁面發送數據請求。");
+        } else {
+            console.warn("無法打開或聚焦 B 頁面。請檢查瀏覽器彈出窗口設置。");
+        }
+
+        // 設置 localStorage 事件監聽器以接收來自 B 頁面的數據
+        window.addEventListener('storage', function(event) {
+            if (event.key === LOCAL_STORAGE_DATA_KEY && event.newValue) {
+                console.log('A 頁面：通過 localStorage 事件接收到數據。');
+                try {
+                    const receivedData = JSON.parse(event.newValue);
+                    if (Array.isArray(receivedData)) {
+                        // 在此處理收到的數據
+                        process_available_areas(receivedData);
+                    } else {
+                        console.error("收到的數據不是預期的數組格式。", receivedData);
+                    }
+                } catch (e) {
+                    console.error("解析從 localStorage 接收到的數據時出錯：", e);
+                }
+            }
+        });
+    });
+
+    // 可選：當 A 頁面關閉時，可以清除其發出的請求鍵，但通常不需要
+    window.addEventListener('beforeunload', function() {
+        // localStorage.removeItem(LOCAL_STORAGE_REQUEST_KEY); // 通常不需要清除這個
+        console.log("A 頁面正在關閉。");
+    });
+
+})();
