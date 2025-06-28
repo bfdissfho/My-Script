@@ -5,6 +5,8 @@
 // @description   no
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
+// @updateURL     https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/section%20mix4
+// @downloadURL   https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/section%20mix4
 // @grant         none
 // ==/UserScript==
 
