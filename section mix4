@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          section mix4
 // @namespace     http://tampermonkey.net/
-// @version       2025.06.15
+// @version       2025.06.29
 // @description   no
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
@@ -15,7 +15,7 @@
     'use strict';
 
 
-    const promo_code_number = ['']
+    const promo_code_number = ''
 
 
 
@@ -31,8 +31,6 @@
         ['field_111','field_110','field_109','field_140','field_141','field_142','field_116','field_115','field_114','field_113','field_112','field_135','field_136','field_137','field_137','field_138','field_139','field_636', 'field_637', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643','field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_614', 'field_615'],
         ['field_405', 'field_406', 'field_407', 'field_408', 'field_409', 'field_410', 'field_411','field_440', 'field_441', 'field_442', 'field_443', 'field_444', 'field_445', 'field_446',],
         ['field_412','field_413','field_414','field_415','field_436','field_437','field_438','field_439',],
-
-
 
 
         ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
@@ -177,10 +175,22 @@
     }
 
     function promo_code() {
+        // Check if the entire success message is present
+        const appliedDiscountContainer = document.querySelector('div.text-bold');
+
+        // If the container exists and contains the specific success text, then we're good
+        if (appliedDiscountContainer && appliedDiscountContainer.textContent.includes('You have successfully applied')) {
+            console.log('Discount already successfully applied, no need to enter a promo code.');
+            return;
+        }
+
+        // If no existing discount message, proceed to enter the promo code
         const checkCodeInput = document.getElementById('checkCode');
         const submitButton = document.querySelector('.check-discount');
+
         if (checkCodeInput && submitButton) {
-            const finalCode = promo_code_number[Math.floor(Math.random() * promo_code_number.length)];
+            // Replace 'YOUR_PROMO_CODE_HERE' with the actual fixed promo code you want to use
+            const finalCode = promo_code_number;
             checkCodeInput.value = finalCode;
             submitButton.click();
         }
@@ -254,7 +264,7 @@
         dataProcessedOnce = false; // 重置數據處理標誌
 
         remove_adblock_loop();
-        //promo_code()
+        promo_code()
 
         // 1. 動態計算 B 頁面 URL
         const currentUrl = window.location.href;
