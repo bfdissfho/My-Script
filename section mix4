@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          section mix4
 // @namespace     http://tampermonkey.net/
-// @version       2025.06.29
+// @version       2025.07.01
 // @description   no
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
@@ -74,6 +74,35 @@
     let dataProcessedOnce = false; // 標誌：確保每個 A 頁面加載只處理一次數據
 
     // --- 你提供的輔助函數 ---
+
+    let randomFallbackTriggered = false; // 保證整個 A 頁面只執行一次
+
+    function wait_for_sections_then_click() {
+        const intervalId = setInterval(() => {
+            const allSections = Array.from(document.querySelectorAll('g[id^="field_"]'));
+
+            if (allSections.length === 0) {
+                console.log("等待載入座位區...");
+                return; // 還沒載入就繼續等
+            }
+
+            clearInterval(intervalId);
+            console.log("已載入 section 標籤！");
+
+            const nonEmpty = allSections.filter(sec => !sec.classList.contains("empty"));
+
+            if (nonEmpty.length === 0) {
+                console.log("所有 section 都標示 empty，重新整理頁面…");
+                setTimeout(()=>location.reload(), 5000)
+                return;
+            }
+
+            const pick = nonEmpty[Math.floor(Math.random() * nonEmpty.length)].id;
+            console.log("隨機挑到可用 section：", pick);
+            setTimeout(() => click_section(pick), 500);// 用現有 click_section 流程
+        }, 1000); // 每秒檢查一次
+    }
+
     function section_click(elementSelector) {
         const section = document.querySelector(elementSelector);
         if (section) {
@@ -250,6 +279,12 @@
 
         if (!foundAvailableAreaInAnyList) {
             console.log("A 頁面：所有想找的區域在所有列表中都不可用，或不符合超過半數可用的條件。");
+
+            if (!randomFallbackTriggered) {// 只跑一次
+                randomFallbackTriggered = true;
+                console.log("啟動隨機選區備援流程…");
+                wait_for_sections_then_click();// ← 呼叫我們剛加入的函式
+            }
         }
         dataProcessedOnce = true; // 標記數據已處理
     }
