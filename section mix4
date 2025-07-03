@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          section mix4
 // @namespace     http://tampermonkey.net/
-// @version       2025.07.01
+// @version       2025.07.04
 // @description   no
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
@@ -22,6 +22,24 @@
     // --- 配置 ---
     // 更新為你提供的嵌套列表結構
     const want_section = [
+
+        ['field_332','field_331','field_330','field_329','field_328B','field_310B','field_311B','field_312B','field_313','field_314B',],//this
+
+        ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
+        ['field_320','field_319','field_318','field_322','field_323','field_324',],
+        ['field_PA5','field_PA3', 'field_PB4','field_PB3','field_PB5','field_PA4', 'field_PA2','field_PB2','field_PB6','field_PA1', 'field_PA6', 'field_PA7', 'field_PA8', 'field_PA9', 'field_PA10', 'field_PB1', 'field_PB7', 'field_PB8', 'field_PB9', 'field_PB10', 'field_PC1', 'field_PC2', 'field_PC3', 'field_PC4', 'field_PC5', 'field_PC6', 'field_PC7', 'field_PC8', 'field_PC9', 'field_PC10', 'field_PD1', 'field_PD2', 'field_PD3', 'field_PD4', 'field_PD5', 'field_PD6', 'field_PD7', 'field_PD8', 'field_PD9', 'field_PD10'],
+
+        ['field_215','field_216','field_217','field_226','field_225','field_227'],//this
+        ['field_220B','field_222B',],//this
+        ['field_221B','field_219B','field_223B','field_224B','field_218B'],//this
+        ['field_210B','field_211B','field_212B','field_213B','field_214B','field_228B','field_229B','field_230B','field_231B',],//this
+        ['field_220A','field_222A',],//this
+        ['field_221A','field_219A','field_223A','field_224A','field_218A'],//this
+        ['field_210A','field_211A','field_212A','field_213A','field_214A','field_228A','field_229A','field_230A','field_231A',],//this
+
+
+
+
         ['field_PEN_VIP', 'field_PEN_BLINK', 'field_VIP', 'field_VIP_GA'],
         ['field_PA5','field_PA3', 'field_PB4','field_PB3','field_PB5','field_PA4', 'field_PA2','field_PB2','field_PB6','field_PA1', 'field_PA6', 'field_PA7', 'field_PA8', 'field_PA9', 'field_PA10', 'field_PB1', 'field_PB7', 'field_PB8', 'field_PB9', 'field_PB10', 'field_PC1', 'field_PC2', 'field_PC3', 'field_PC4', 'field_PC5', 'field_PC6', 'field_PC7', 'field_PC8', 'field_PC9', 'field_PC10', 'field_PD1', 'field_PD2', 'field_PD3', 'field_PD4', 'field_PD5', 'field_PD6', 'field_PD7', 'field_PD8', 'field_PD9', 'field_PD10'],
         ['field_PEN_GA', 'field_PEN_E','field_GA',],
