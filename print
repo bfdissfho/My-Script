@@ -1,10 +1,13 @@
 // ==UserScript==
 // @name         print at home
 // @namespace    http://tampermonkey.net/
-// @version      2025-3-20
-// @description  My Tampermonkey script
+// @version      2025-07-06
+// @description  Record cart data on checkout and alert on payment page (full Seat Info)
 // @match        https://ticketmaster.sg/ticket/checkout
-// @grant        none
+// @match        https://ticketmaster.sg/ticket/payment/*
+// @grant        GM_setValue
+// @grant        GM_getValue
+// @grant        GM_deleteValue
 // @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/print
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/print
 // ==/UserScript==
@@ -13,60 +16,68 @@
     'use strict';
 
     function credit_card() {
-        let credit_card = document.querySelector('.field-checkoutform-paymentid-12 input[type="radio"]');
-        if (credit_card) {
-            console.log("Credit card radio button found.");
-            credit_card.click();
-            }
-        }
-                  // Step 2: Wait for the Print-at-Home option to appear
-    function print_at_home(){
-        let print_at_home = document.querySelector('#checkoutform-shipmentid');
-        if (print_at_home) {
-            console.log("Print-at-Home option found.");
-            let options = print_at_home.options;
-            for (let i = 0; i < options.length; i++) {
-                if (options[i].text === 'Print-at-Home') {
-                    options[i].selected = true;
-                    break;
-                    }
-                if (options[i].text === 'Ticket Delivery Delay') {
-                    options[i].selected = true;
-                    break;
-                    }
-                }
+        const radio = document.querySelector('.field-checkoutform-paymentid-12 input[type="radio"]');
+        if (radio) radio.click();
+    }
 
-            }
+    function print_at_home() {
+        const select = document.querySelector('#checkoutform-shipmentid');
+        if (select) {
+            Array.from(select.options).forEach(opt => {
+                if (opt.text === 'Print-at-Home' || opt.text === 'Ticket Delivery Delay') opt.selected = true;
+            });
         }
-    function secure_ticket(){
-        const secureTicketOptOut = document.getElementById('secureTicketOptOut');
-        if (secureTicketOptOut){
-            secureTicketOptOut.click();
-            }
-        }
+    }
 
-    function hear(){
-        const hear_option = document.getElementById('opt-out');
-        if (hear_option){
-            hear_option.click();
+    function secure_ticket() {
+        const optOut = document.getElementById('secureTicketOptOut');
+        if (optOut) optOut.click();
+    }
+
+    function hear() {
+        const opt = document.getElementById('opt-out');
+        if (opt) opt.click();
+    }
+
+    function confirm() {
+        const btn = document.querySelector('#submitButton');
+        if (btn) btn.click();
+    }
+
+    function save_data() {
+        const url = window.location.href;
+        if (url.includes('/ticket/checkout')) {
+            try { GM_deleteValue('cartData'); } catch {}
+            const rows = document.querySelectorAll('#cartList tbody tr.orderTicket');
+            const data = Array.from(rows).map(row => ({
+                item: row.querySelector('.ticketEventName')?.innerText.trim(),
+                date: row.querySelector('.ticketEventDate')?.innerText.trim(),
+                seatInfo: row.querySelector('td:nth-child(2)')?.innerText.trim().replace(/\n/g, ' '),
+                ticketInfo: row.querySelector('.ticket-info')?.innerText.trim().replace(/\n/g, ' '),
+                subtotal: row.querySelector('td:nth-child(5)')?.innerText.replace(/[^0-9.]/g, '')
+            }));
+            GM_setValue('cartData', JSON.stringify(data));
+            console.log(data)
+        } else if (url.includes('/ticket/payment/')) {
+            const dataStr = GM_getValue('cartData', '[]');
+            let data;
+            try { data = JSON.parse(dataStr); } catch { data = []; }
+            if (data.length) {
+                let msg = 'Your Cart Items:\n';
+                data.forEach((d, i) => {
+                    msg += `${i+1}. ${d.item} | ${d.date} | ${d.seatInfo} | ${d.ticketInfo} | Subtotal: $${d.subtotal}\n`;
+                });
+                alert(msg);
             }
         }
+    }
 
-    function confirm(){
-        let confirm = document.querySelector('#submitButton');
-        if (confirm) {
-            console.log("Confirm button found.");
-            confirm.click();
-            }
-        }
-
-    setTimeout(function() {
+    setTimeout(() => {
         credit_card();
-        setTimeout(print_at_home, 3000); // You can use 0 to run it immediately after click_buyticket
+        setTimeout(save_data, 1000);
+        setTimeout(print_at_home, 3000);
         setTimeout(secure_ticket, 6000);
         setTimeout(hear, 8000);
-        setTimeout(confirm, 480000)
+        setTimeout(confirm, 480000);
     }, 5000);
-
-
-    })();
+})();
