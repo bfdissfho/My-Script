@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         print at home
 // @namespace    http://tampermonkey.net/
-// @version      2025-07-06
-// @description  Record cart data on checkout and alert on payment page (full Seat Info)
+// @version      2025-07-06-3
+// @description  no
 // @match        https://ticketmaster.sg/ticket/checkout
 // @match        https://ticketmaster.sg/ticket/payment/*
+// @match        https://secure2.reddotpayment.com/*
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_deleteValue
@@ -14,40 +15,12 @@
 
 (function() {
     'use strict';
+    const host = location.hostname;
 
-    function credit_card() {
-        const radio = document.querySelector('.field-checkoutform-paymentid-12 input[type="radio"]');
-        if (radio) radio.click();
-    }
-
-    function print_at_home() {
-        const select = document.querySelector('#checkoutform-shipmentid');
-        if (select) {
-            Array.from(select.options).forEach(opt => {
-                if (opt.text === 'Print-at-Home' || opt.text === 'Ticket Delivery Delay') opt.selected = true;
-            });
-        }
-    }
-
-    function secure_ticket() {
-        const optOut = document.getElementById('secureTicketOptOut');
-        if (optOut) optOut.click();
-    }
-
-    function hear() {
-        const opt = document.getElementById('opt-out');
-        if (opt) opt.click();
-    }
-
-    function confirm() {
-        const btn = document.querySelector('#submitButton');
-        if (btn) btn.click();
-    }
-
-    function save_data() {
-        const url = window.location.href;
-        if (url.includes('/ticket/checkout')) {
-            try { GM_deleteValue('cartData'); } catch {}
+    // —— Ticketmaster.sg 域下：保存与自动点击 ——
+    if (host === 'ticketmaster.sg') {
+        // 保存购物车数据
+        function saveCart() {
             const rows = document.querySelectorAll('#cartList tbody tr.orderTicket');
             const data = Array.from(rows).map(row => ({
                 item: row.querySelector('.ticketEventName')?.innerText.trim(),
@@ -57,27 +30,89 @@
                 subtotal: row.querySelector('td:nth-child(5)')?.innerText.replace(/[^0-9.]/g, '')
             }));
             GM_setValue('cartData', JSON.stringify(data));
-            console.log(data)
-        } else if (url.includes('/ticket/payment/')) {
-            const dataStr = GM_getValue('cartData', '[]');
-            let data;
-            try { data = JSON.parse(dataStr); } catch { data = []; }
-            if (data.length) {
-                let msg = 'Your Cart Items:\n';
-                data.forEach((d, i) => {
-                    msg += `${i+1}. ${d.item} | ${d.date} | ${d.seatInfo} | ${d.ticketInfo} | Subtotal: $${d.subtotal}\n`;
+            console.log('Cart saved', data);
+        }
+        // 自动点击支付按钮
+        function clickPay() {
+            const btn = document.querySelector('.rdp-checkout-button');
+            if (btn) btn.click();
+        }
+        // 选择信用卡支付
+        function credit_card() {
+            const radio = document.querySelector('.field-checkoutform-paymentid-12 input[type="radio"]');
+            if (radio) radio.click();
+        }
+        // 选择 Print-at-Home
+        function print_at_home() {
+            const select = document.querySelector('#checkoutform-shipmentid');
+            if (select) {
+                Array.from(select.options).forEach(opt => {
+                    if (opt.text === 'Print-at-Home' || opt.text === 'Ticket Delivery Delay') opt.selected = true;
                 });
-                alert(msg);
             }
         }
+        // 安全票
+        function secure_ticket() {
+            const optOut = document.getElementById('secureTicketOptOut');
+            if (optOut) optOut.click();
+        }
+        // 灯箱
+        function hear() {
+            const opt = document.getElementById('opt-out');
+            if (opt) opt.click();
+        }
+        // 点击确认提交
+        function confirm() {
+            const btn = document.querySelector('#submitButton');
+            if (btn) btn.click();
+        }
+
+        // 主流程
+        setTimeout(() => {
+            const url = location.href;
+            if (url.includes('/ticket/checkout')) {
+                credit_card();
+                saveCart();
+                print_at_home();
+                secure_ticket();
+                hear();
+                // 480 秒后点击确认
+                setTimeout(confirm, 480000);
+            } else if (url.includes('/ticket/payment/')) {
+                clickPay();
+            }
+        }, 5000);
     }
 
-    setTimeout(() => {
-        credit_card();
-        setTimeout(save_data, 1000);
-        setTimeout(print_at_home, 3000);
-        setTimeout(secure_ticket, 6000);
-        setTimeout(hear, 8000);
-        setTimeout(confirm, 480000);
-    }, 5000);
+    // —— secure2.reddotpayment.com 域下：展示购物车数据 ——
+    if (host === 'secure2.reddotpayment.com') {
+        function showCartData() {
+            const dataStr = GM_getValue('cartData', '[]');
+            let data;
+            try {
+                data = JSON.parse(dataStr);
+            } catch {
+                data = [];
+            }
+            if (!data.length) return;
+            if (document.getElementById('printCartData')) return;
+            const container = document.createElement('div');
+            container.id = 'printCartData';
+            container.style = 'position:fixed;top:10px;right:10px;background:#fff;color:#000;padding:10px;' +
+                              'border:1px solid #ccc;z-index:9999;max-width:300px;max-height:80%;overflow:auto;';
+            const title = document.createElement('strong');
+            title.innerText = 'Your Cart Items:';
+            container.appendChild(title);
+            const ul = document.createElement('ul');
+            data.forEach(d => {
+                const li = document.createElement('li');
+                li.innerText = `${d.item} | ${d.date} | ${d.seatInfo} | ${d.ticketInfo} | $${d.subtotal}`;
+                ul.appendChild(li);
+            });
+            container.appendChild(ul);
+            document.body.prepend(container);
+        }
+        // 在页面加载完成后展示
+        window.addEventListener('load', showCartData);
+    }
 })();
