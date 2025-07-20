@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         buyticket findticket
 // @namespace    http://tampermonkey.net/
-// @version      2025-07-05
+// @version      2025-07-20
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/activity/detail/*
 // @match        https://ticketmaster.sg/activity/game/*
@@ -15,9 +15,12 @@
 (function() {
     'use strict';
 
+    // 設定想要點擊的按鈕索引：數字字串，如 '0','1','2'…；或 'random' 隨機
+    const want_date = 'random'; // <- 改成你想要的索引，或 'random'
+
     function click_buyticket() {
-        // click buy ticket
-        let buy_ticket = document.querySelector(
+        // 點擊 Buy Ticket
+        const buy_ticket = document.querySelector(
             "#main-container > section.whiteNav.shadow.sticky-top > div > div > div.col-lg-3.col-md-3.col-sm-3.col-xs-12.col-12.pt-3.py-sm-2.order-1.order-sm-2 > a"
         );
         if (buy_ticket) {
@@ -27,66 +30,55 @@
     }
 
     function click_findticket() {
-        // Check if elements with class 'btn btn-primary text-bold m-0' exist
-        let find_tickets = document.querySelectorAll('.btn.btn-primary.text-bold.m-0');
+        // 找到所有 Find Tickets 按鈕
+        const find_tickets = document.querySelectorAll('.btn.btn-primary.text-bold.m-0');
+        if (find_tickets.length === 0) return;
 
-        if (find_tickets.length > 0) {
-            let url;
-
-            if (find_tickets.length > 1) {
-                // Select a random element if there's more than one
-                let randomIndex = Math.floor(Math.random() * find_tickets.length);
-                url = find_tickets[randomIndex].href;
-            } else {
-                // Select the first (and only) element
-                url = find_tickets[0].href;
-            }
-
-            window.location.href = url;
+        let index;
+        if (want_date === 'random') {
+            // 隨機選一個
+            index = Math.floor(Math.random() * find_tickets.length);
+        } else {
+            // 轉成數字，並確保在範圍內
+            const i = parseInt(want_date, 10);
+            index = (isNaN(i) || i < 0 || i >= find_tickets.length)
+                ? 0  // 無效則回退第一個
+                : i;
         }
+
+        const url = find_tickets[index].href;
+        window.location.href = url;
     }
 
-function card_presale(){
-
-    const liElements = document.querySelectorAll('li.buy');
-
-    liElements.forEach(function(liElement) {
-        const aTag = liElement.querySelector('a');
-
-        if (aTag && aTag.href.includes('https://ticketmaster.sg/ticket/area/')) {
-            aTag.click();
-        }
-        if (aTag && aTag.href.includes('https://ticketmaster.sg/activity/game/')) {
-            aTag.click();
-        }
-    });
-
-}
+    function card_presale(){
+        document.querySelectorAll('li.buy').forEach(li => {
+            const a = li.querySelector('a');
+            if (!a) return;
+            if (a.href.includes('https://ticketmaster.sg/ticket/area/') ||
+                a.href.includes('https://ticketmaster.sg/activity/game/')) {
+                a.click();
+            }
+        });
+    }
 
     function url_game(){
-        if (window.location.href.includes('https://ticketmaster.sg/activity/game/')) {
-            let targetElement = document.querySelector('a.btn.btn-primary.text-bold.m-0[href*="https://ticketmaster.sg/ticket/area"]');
-            if (targetElement) {
-                targetElement.click();
-            }
+        if (location.href.includes('https://ticketmaster.sg/activity/game/')) {
+            const target = document.querySelector('a.btn.btn-primary.text-bold.m-0[href*="https://ticketmaster.sg/ticket/area"]');
+            if (target) target.click();
         }
     }
 
     function refresh_paused(){
         if (document.title.includes("Your Browsing Activity Has Been Paused")) {
-
-            function refresh(){
-                location.reload();
-            }
-            setTimeout(refresh, 20000);
-
+            setTimeout(() => location.reload(), 20000);
         }
     }
 
+    // 啟動時機
     setTimeout(refresh_paused, 1000);
     setTimeout(click_buyticket, 1000);
-    setTimeout(card_presale, 2000)
-    setTimeout(url_game, 2000)
+    setTimeout(card_presale,   2000);
+    setTimeout(url_game,       2000);
     setTimeout(click_buyticket, 7000);
     setTimeout(click_buyticket, 16000);
 
