@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          section mix4
 // @namespace     http://tampermonkey.net/
-// @version       2025.07.20
+// @version       2025.07.21
 // @description   no
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
@@ -248,6 +248,10 @@
         }
     }
 
+    function refresh(){
+        location.reload()
+    }
+
     // --- A 頁面核心邏輯：從 localStorage 獲取數據並根據新規則處理 ---
     function process_available_areas(areaDataFromB) {
         // 只有當尚未處理數據時才執行，防止重複處理
@@ -323,6 +327,7 @@
 
         remove_adblock_loop();
         promo_code()
+        setTimeout(refresh, 8000)
 
         // 1. 動態計算 B 頁面 URL
         const currentUrl = window.location.href;
