@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          section mix4
 // @namespace     http://tampermonkey.net/
-// @version       2025.07.21
+// @version       2025.07.22
 // @description   no
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
@@ -15,7 +15,7 @@
     'use strict';
 
 
-    const promo_code_number = ''
+    const promo_code_number = '552135'
 
 
 
