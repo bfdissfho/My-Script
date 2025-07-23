@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         buyticket findticket
 // @namespace    http://tampermonkey.net/
-// @version      2025-07-20
+// @version      2025-07-23
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/activity/detail/*
 // @match        https://ticketmaster.sg/activity/game/*
