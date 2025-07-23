@@ -1,32 +1,78 @@
 // ==UserScript==
 // @name          section mix4
 // @namespace     http://tampermonkey.net/
-// @version       2025.07.23
-// @description   no
+// @version       2025.07.23.1
+// @description   123
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
+// @grant         none
+// @run-at        document-start
 // @updateURL     https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/section%20mix4
 // @downloadURL   https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/section%20mix4
-// @grant         none
 // ==/UserScript==
-
 
 (function() {
     'use strict';
 
+    // ─── 1) 注入到页面上下文的脚本 ─────────────────────
+    const pageHook = function() {
+        // 绑到 window.fetch
+        const origFetch = window.fetch.bind(window);
+        window.fetch = async function(input, init) {
+            const resp = await origFetch(input, init);
+            if (typeof input === 'string' && input.includes('/ticket/get-area-map/')) {
+                // 只对目标接口做 JSON 解析
+                try {
+                    const json = await resp.clone().json();
+                    const areaArray = Object.values(json).map(a => ({
+                        sectionCode: a.sectionCode,
+                        areaStatus: a.areaStatus
+                    }));
+                    // 发事件给 userscript
+                    window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaArray }));
+                } catch (e) {
+                    console.error('Hook: 解析 get-area-map JSON 失败', e);
+                }
+            }
+            return resp;
+        };
 
-    const promo_code_number = ''
+        // 绑到 XMLHttpRequest
+        const origSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.send = function(body) {
+            this.addEventListener('load', () => {
+                if (this.responseURL.includes('/ticket/get-area-map/')) {
+                    try {
+                        const json = JSON.parse(this.responseText);
+                        const areaArray = Object.values(json).map(a => ({
+                            sectionCode: a.sectionCode,
+                            areaStatus: a.areaStatus
+                        }));
+                        window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaArray }));
+                    } catch (e) {
+                        console.error('Hook: 解析 XHR get-area-map 失败', e);
+                    }
+                }
+            });
+            return origSend.call(this, body);
+        };
+    };
+
+    // 把上面函数注入到页面
+    const script = document.createElement('script');
+    script.textContent = `(${pageHook.toString()})();`;
+    document.documentElement.appendChild(script);
+    script.remove();
 
 
-
-    // --- 配置 ---
-    // 更新為你提供的嵌套列表結構
+    // ─── 2) userscript 本身的逻辑 ─────────────────────
+    const promo_code_number = '';
     const want_section = [
         ['field_PB1'],
         ['field_318','field_324'],
-       
-       
-       
+
+
+
         ['field_332','field_331','field_330','field_329','field_328B','field_310B','field_311B','field_312B','field_313','field_314B',],//this
 
         ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
@@ -84,294 +130,132 @@
         ["field_S_A","field_S_B","field_S_C",],
         ["field_D_C","field_D_B","field_D_A",],
         ["field_UC_B","field_UC_A","field_UC_D","field_UC_C","field_UC_F","field_UC_E",],
-
-
     ];
+    let dataProcessedOnce = false;
+    let randomFallbackTriggered = false;
 
+    // 收到页面上下文的区域数据后触发
+    window.addEventListener('areaDataReady', e => {
+        process_available_areas(e.detail);
+    });
 
-    const B_PAGE_WINDOW_NAME = 'BPageWindow'; // B 頁面固定窗口名稱
-    const LOCAL_STORAGE_REQUEST_KEY = 'bPageDataRequest'; // A 到 B 的請求鍵
-    const LOCAL_STORAGE_DATA_KEY = 'bPageAreaData'; // B 到 A 的數據鍵
+    function process_available_areas(areaData) {
+        if (dataProcessedOnce) return;
+        console.log("开始处理区域数据：", areaData);
+        let found = false;
 
-    let bPageWindow = null;
-    let dataProcessedOnce = false; // 標誌：確保每個 A 頁面加載只處理一次數據
-
-    // --- 你提供的輔助函數 ---
-
-    let randomFallbackTriggered = false; // 保證整個 A 頁面只執行一次
-
-    function wait_for_sections_then_click() {
-        const intervalId = setInterval(() => {
-            const allSections = Array.from(document.querySelectorAll('g[id^="field_"]'));
-
-            if (allSections.length === 0) {
-                console.log("等待載入座位區...");
-                return; // 還沒載入就繼續等
+        for (const subList of want_section) {
+            const matched = [];
+            const available = [];
+            for (const code of subList) {
+                const info = areaData.find(a => a.sectionCode === code);
+                if (info) {
+                    matched.push(code);
+                    if (info.areaStatus === 'AVAILABLE') available.push(code);
+                }
             }
-
-            clearInterval(intervalId);
-            console.log("已載入 section 標籤！");
-
-            const nonEmpty = allSections.filter(sec => !sec.classList.contains("empty"));
-
-            if (nonEmpty.length === 0) {
-                console.log("所有 section 都標示 empty，重新整理頁面…");
-                setTimeout(()=>location.reload(), 5000)
-                return;
+            if (matched.length > 0 && available.length >= matched.length / 2) {
+                const pick = available[Math.floor(Math.random() * available.length)];
+                console.log(`子列表 [${subList}] 符合条件，选中 ${pick}`);
+                click_section(pick);
+                found = true;
+                break;
             }
+        }
 
-            const pick = nonEmpty[Math.floor(Math.random() * nonEmpty.length)].id;
-            console.log("隨機挑到可用 section：", pick);
-            setTimeout(() => click_section(pick), 500);// 用現有 click_section 流程
-        }, 1000); // 每秒檢查一次
+        if (!found && !randomFallbackTriggered) {
+            randomFallbackTriggered = true;
+            console.log("未找到理想区域，走随机备援…");
+            wait_for_sections_then_click();
+        }
+        dataProcessedOnce = true;
     }
 
-    function section_click(elementSelector) {
-        const section = document.querySelector(elementSelector);
-        if (section) {
-            const clickEvent = new MouseEvent("click", {
-                view: window,
-                bubbles: true,
-                cancelable: true,
-            });
-            section.dispatchEvent(clickEvent);
-            // console.log(`Clicked on section: ${elementSelector}`); // 由於 click_section 內部已有很多日誌，這裡可以選擇性保留
-            return true; // 表示點擊成功
-        }
-        return false; // 表示未找到元素或點擊失敗
+    function wait_for_sections_then_click() {
+        const iv = setInterval(() => {
+            const all = Array.from(document.querySelectorAll('g[id^="field_"]'));
+            if (all.length === 0) return;
+            clearInterval(iv);
+            const nonEmpty = all.filter(s => !s.classList.contains('empty'));
+            if (nonEmpty.length === 0) {
+                console.log("所有 section 都 empty，刷新页面");
+                setTimeout(() => location.reload(), 5000);
+                return;
+            }
+            const pick = nonEmpty[Math.floor(Math.random() * nonEmpty.length)].id;
+            console.log("随机备援挑到：", pick);
+            setTimeout(() => click_section(pick), 500);
+        }, 1000);
+    }
+
+    function section_click(sel) {
+        const el = document.querySelector(sel);
+        if (!el) return false;
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+        return true;
     }
 
     function click_section(field) {
-        let section1 = "#" + field + ">g:nth-of-type(1)>polygon";
-        let section2 = "#" + field + ">g:nth-of-type(1)>path";
-        let findInterval; // 用來保存 setInterval 的 ID
-        let attempts = 0; // 新增：用於計數嘗試次數，可選
-        const maxRetries = 20; // 新增：最大重試次數，約 10 秒
-        const retryIntervalMs = 500; // 新增：重試間隔毫秒
-
-        const tryToFindSections = () => {
+        const sel1 = `#${field}>g:nth-of-type(1)>polygon`;
+        const sel2 = `#${field}>g:nth-of-type(1)>path`;
+        let attempts = 0, timer = setInterval(() => {
             attempts++;
-            let section3 = document.querySelector(section1);
-            let section4 = document.querySelector(section2);
-
-            if (section3) {
-                console.log(`找到 polygon section (${field}), 點擊並清除定時器 (嘗試 ${attempts} 次)`);
-                clearInterval(findInterval); // 找到後清除定時器
-                section_click(section1);
+            if (document.querySelector(sel1)) {
+                clearInterval(timer);
+                section_click(sel1);
                 ticket_price_loop();
-            } else if (section4) {
-                console.log(`找到 path section (${field}), 點擊並清除定時器 (嘗試 ${attempts} 次)`);
-                clearInterval(findInterval); // 找到後清除定時器
-                section_click(section2);
+            } else if (document.querySelector(sel2)) {
+                clearInterval(timer);
+                section_click(sel2);
                 ticket_price_loop();
-            } else {
-                console.log(`尚未找到 ${field} 的 section (polygon 或 path)，繼續尋找... (第 ${attempts} 次嘗試)`);
-                if (attempts >= maxRetries) {
-                    clearInterval(findInterval);
-                    console.warn(`點擊區域 ${field} 超時，已達到最大重試次數 (${maxRetries})。`);
-                }
+            } else if (attempts >= 20) {
+                clearInterval(timer);
+                console.warn(`点击 ${field} 超时`);
             }
-        };
-
-        // 每隔 500 毫秒嘗試尋找一次
-        findInterval = setInterval(tryToFindSections, retryIntervalMs);
+        }, 500);
     }
-    // --- 輔助函數 (未變更) ---
-    function ticket_price_loop() {
-        const intervalId = setInterval(() => {
-            let ticketPriceElement = document.querySelector('.w100.form-select');
-            if (ticketPriceElement) {
-                clearInterval(intervalId);
-                console.log("Ticket price select found:", ticketPriceElement);
-                const lastIndex = ticketPriceElement.options.length - 1;
-                ticketPriceElement.selectedIndex = lastIndex;
-                console.log("Selected Last Option:", ticketPriceElement.value);
 
-                const bestAvailableButton = document.getElementById("autoMode");
-                if (bestAvailableButton) {
-                    bestAvailableButton.click();
-                    console.log("Confirm button clicked.");
-                } else {
-                    console.log("Confirm button not found.");
-                }
-            }
+    function ticket_price_loop() {
+        const iv = setInterval(() => {
+            const sel = document.querySelector('.w100.form-select');
+            if (!sel) return;
+            clearInterval(iv);
+            sel.selectedIndex = sel.options.length - 1;
+            const btn = document.getElementById('autoMode');
+            if (btn) btn.click();
         }, 1000);
     }
 
     function remove_adblock_loop() {
-        const intervalId = setInterval(() => {
-            const modalBackdrop = document.querySelector('div.modal-backdrop.fade.show');
-            const adblockModal = document.getElementById('adblockModal');
-
-            let removedSomething = false;
-
-            if (modalBackdrop) {
-                modalBackdrop.remove();
-                console.log("modalBackdrop removed.");
-                removedSomething = true;
-            }
-
-            if (adblockModal) {
-                adblockModal.remove();
-                console.log("adblockModal removed.");
-                removedSomething = true;
-            }
-
-            if (!document.querySelector('div.modal-backdrop.fade.show') &&
-                !document.getElementById('adblockModal') &&
-                removedSomething) {
-                clearInterval(intervalId);
-                console.log("All adblock-related modals removed. Stopping loop.");
+        const iv = setInterval(() => {
+            let removed = false;
+            const m = document.querySelector('div.modal-backdrop.fade.show');
+            const a = document.getElementById('adblockModal');
+            if (m) { m.remove(); removed = true; }
+            if (a) { a.remove(); removed = true; }
+            if (removed && !document.querySelector('div.modal-backdrop.fade.show') && !document.getElementById('adblockModal')) {
+                clearInterval(iv);
             }
         }, 1000);
     }
 
     function promo_code() {
-        // Check if the entire success message is present
-        const appliedDiscountContainer = document.querySelector('div.text-bold');
-
-        // If the container exists and contains the specific success text, then we're good
-        if (appliedDiscountContainer && appliedDiscountContainer.textContent.includes('You have successfully applied')) {
-            console.log('Discount already successfully applied, no need to enter a promo code.');
-            return;
-        }
-
-        // If no existing discount message, proceed to enter the promo code
-        const checkCodeInput = document.getElementById('checkCode');
-        const submitButton = document.querySelector('.check-discount');
-
-        if (checkCodeInput && submitButton) {
-            // Replace 'YOUR_PROMO_CODE_HERE' with the actual fixed promo code you want to use
-            const finalCode = promo_code_number;
-            checkCodeInput.value = finalCode;
-            submitButton.click();
+        const msg = document.querySelector('div.text-bold');
+        if (msg && msg.textContent.includes('successfully applied')) return;
+        const inp = document.getElementById('checkCode');
+        const btn = document.querySelector('.check-discount');
+        if (inp && btn) {
+            inp.value = promo_code_number;
+            btn.click();
         }
     }
 
-    function refresh(){
-        location.reload()
-    }
+    function refresh() { location.reload(); }
 
-    // --- A 頁面核心邏輯：從 localStorage 獲取數據並根據新規則處理 ---
-    function process_available_areas(areaDataFromB) {
-        // 只有當尚未處理數據時才執行，防止重複處理
-        if (dataProcessedOnce) {
-            console.log("A 頁面：數據已在此加載中處理過。跳過重新處理。");
-            return;
-        }
-        console.log("A 頁面：開始處理來自 B 頁面的可用區域數據。", areaDataFromB);
-
-        let foundAvailableAreaInAnyList = false;
-
-        // 遍歷 want_section 中的每個子列表
-        for (const subList of want_section) {
-            const availableAreasInSubList = [];
-            const matchedAreasCount = []; // 用於計算分母：在 B 頁面數據中找到的區域數
-
-            // 檢查當前子列表中的每個區域
-            for (const wantedField of subList) {
-                const matchingArea = areaDataFromB.find(item => item.sectionCode === wantedField);
-
-                if (matchingArea) {
-                    console.log(`${wantedField} area status: ${matchingArea.areaStatus}`);
-                    matchedAreasCount.push(wantedField); // 如果在 B 頁面數據中找到，就計入分母
-                    if (matchingArea.areaStatus === "AVAILABLE") {
-                        availableAreasInSubList.push(wantedField);
-                    }
-                } else {
-                    // 即使未找到，也會日誌提醒，但不計入分母
-                    console.log(`B 頁面數據中未找到 ${wantedField} 的信息，將不計入比例計算。`);
-                }
-            }
-
-            // 只有當有實際匹配到的區域時才進行判斷
-            if (matchedAreasCount.length > 0) {
-                // 判斷可用區域是否超過實際匹配區域的一半
-                if (availableAreasInSubList.length >= matchedAreasCount.length / 2) {
-                    // 如果超過一半可用，則從可用區域中隨機選擇一個
-                    const randomIndex = Math.floor(Math.random() * availableAreasInSubList.length);
-                    const selectedArea = availableAreasInSubList[randomIndex];
-
-                    console.log(`找到符合條件的子列表 [${subList.join(', ')}] (匹配區域數: ${matchedAreasCount.length}, 可用區域數: ${availableAreasInSubList.length})。從中隨機選擇可用區域: ${selectedArea}，開始點擊流程。`);
-                    click_section(selectedArea);
-                    foundAvailableAreaInAnyList = true;
-                    break; // 找到並點擊後就停止檢查其他子列表
-                } else {
-                    console.log(`子列表 [${subList.join(', ')}] 可用區域 (${availableAreasInSubList.length}) 不足實際匹配區域 (${matchedAreasCount.length}) 的一半，繼續檢查下一個列表。`);
-                }
-            } else {
-                console.log(`子列表 [${subList.join(', ')}] 在 B 頁面數據中沒有任何匹配區域，跳過此列表。`);
-            }
-        }
-
-        if (!foundAvailableAreaInAnyList) {
-            console.log("A 頁面：所有想找的區域在所有列表中都不可用，或不符合超過半數可用的條件。");
-
-            if (!randomFallbackTriggered) {// 只跑一次
-                randomFallbackTriggered = true;
-                console.log("啟動隨機選區備援流程…");
-                wait_for_sections_then_click();// ← 呼叫我們剛加入的函式
-            }
-        }
-        dataProcessedOnce = true; // 標記數據已處理
-    }
-
-    // --- 啟動流程 ---
-    window.addEventListener('load', function() {
-        console.log("A 頁面加載完成。");
-
-        // 每次 A 頁面加載時，清除上次的數據，確保獲取最新數據
-        localStorage.removeItem(LOCAL_STORAGE_DATA_KEY);
-        console.log("A 頁面：已清除 localStorage 中的舊數據。");
-        dataProcessedOnce = false; // 重置數據處理標誌
-
+    window.addEventListener('load', () => {
+        console.log('A 页面加载完成，启用后台流程');
         remove_adblock_loop();
-        promo_code()
-        setTimeout(refresh, 8000)
-
-        // 1. 動態計算 B 頁面 URL
-        const currentUrl = window.location.href;
-        const bPageUrl = currentUrl.replace('/ticket/area/', '/ticket/get-area-map/');
-        console.log(`動態生成的 B 頁面 URL: ${bPageUrl}`);
-
-        // 2. 打開或聚焦 B 頁面
-        bPageWindow = window.open(bPageUrl, B_PAGE_WINDOW_NAME);
-
-        if (bPageWindow) {
-            // bPageWindow.focus(); // 如果你希望 B 頁面始終置於前景，可以取消註釋此行
-            console.log("已嘗試打開或聚焦 B 頁面。");
-
-            // 通過 localStorage 向 B 頁面發送數據請求
-            // 設置一個新的時間戳，觸發 B 頁面的 storage 事件，使其重新發送數據
-            localStorage.setItem(LOCAL_STORAGE_REQUEST_KEY, Date.now().toString());
-            console.log("A 頁面：已通過 localStorage 向 B 頁面發送數據請求。");
-        } else {
-            console.warn("無法打開或聚焦 B 頁面。請檢查瀏覽器彈出窗口設置。");
-        }
-
-        // 設置 localStorage 事件監聽器以接收來自 B 頁面的數據
-        window.addEventListener('storage', function(event) {
-            if (event.key === LOCAL_STORAGE_DATA_KEY && event.newValue) {
-                console.log('A 頁面：通過 localStorage 事件接收到數據。');
-                try {
-                    const receivedData = JSON.parse(event.newValue);
-                    if (Array.isArray(receivedData)) {
-                        // 在此處理收到的數據
-                        process_available_areas(receivedData);
-                    } else {
-                        console.error("收到的數據不是預期的數組格式。", receivedData);
-                    }
-                } catch (e) {
-                    console.error("解析從 localStorage 接收到的數據時出錯：", e);
-                }
-            }
-        });
+        promo_code();
+        setTimeout(refresh, 8000);
     });
-
-    // 可選：當 A 頁面關閉時，可以清除其發出的請求鍵，但通常不需要
-    window.addEventListener('beforeunload', function() {
-        // localStorage.removeItem(LOCAL_STORAGE_REQUEST_KEY); // 通常不需要清除這個
-        console.log("A 頁面正在關閉。");
-    });
-
 })();
