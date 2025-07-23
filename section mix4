@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name          section mix4
 // @namespace     http://tampermonkey.net/
-// @version       2025.07.23.1
-// @description   123
+// @version       2025.07.23.2
+// @description   在页面上下文拦截 AJAX，并通过事件发给脚本处理
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
 // @grant         none
@@ -14,59 +14,8 @@
 (function() {
     'use strict';
 
-    // ─── 1) 注入到页面上下文的脚本 ─────────────────────
-    const pageHook = function() {
-        // 绑到 window.fetch
-        const origFetch = window.fetch.bind(window);
-        window.fetch = async function(input, init) {
-            const resp = await origFetch(input, init);
-            if (typeof input === 'string' && input.includes('/ticket/get-area-map/')) {
-                // 只对目标接口做 JSON 解析
-                try {
-                    const json = await resp.clone().json();
-                    const areaArray = Object.values(json).map(a => ({
-                        sectionCode: a.sectionCode,
-                        areaStatus: a.areaStatus
-                    }));
-                    // 发事件给 userscript
-                    window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaArray }));
-                } catch (e) {
-                    console.error('Hook: 解析 get-area-map JSON 失败', e);
-                }
-            }
-            return resp;
-        };
-
-        // 绑到 XMLHttpRequest
-        const origSend = XMLHttpRequest.prototype.send;
-        XMLHttpRequest.prototype.send = function(body) {
-            this.addEventListener('load', () => {
-                if (this.responseURL.includes('/ticket/get-area-map/')) {
-                    try {
-                        const json = JSON.parse(this.responseText);
-                        const areaArray = Object.values(json).map(a => ({
-                            sectionCode: a.sectionCode,
-                            areaStatus: a.areaStatus
-                        }));
-                        window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaArray }));
-                    } catch (e) {
-                        console.error('Hook: 解析 XHR get-area-map 失败', e);
-                    }
-                }
-            });
-            return origSend.call(this, body);
-        };
-    };
-
-    // 把上面函数注入到页面
-    const script = document.createElement('script');
-    script.textContent = `(${pageHook.toString()})();`;
-    document.documentElement.appendChild(script);
-    script.remove();
-
-
-    // ─── 2) userscript 本身的逻辑 ─────────────────────
     const promo_code_number = '';
+
     const want_section = [
         ['field_PB1'],
         ['field_318','field_324'],
@@ -131,6 +80,61 @@
         ["field_D_C","field_D_B","field_D_A",],
         ["field_UC_B","field_UC_A","field_UC_D","field_UC_C","field_UC_F","field_UC_E",],
     ];
+
+
+    // ─── 1) 注入到页面上下文的脚本 ─────────────────────
+    const pageHook = function() {
+        // 绑到 window.fetch
+        const origFetch = window.fetch.bind(window);
+        window.fetch = async function(input, init) {
+            const resp = await origFetch(input, init);
+            if (typeof input === 'string' && input.includes('/ticket/get-area-map/')) {
+                // 只对目标接口做 JSON 解析
+                try {
+                    const json = await resp.clone().json();
+                    const areaArray = Object.values(json).map(a => ({
+                        sectionCode: a.sectionCode,
+                        areaStatus: a.areaStatus
+                    }));
+                    // 发事件给 userscript
+                    window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaArray }));
+                } catch (e) {
+                    console.error('Hook: 解析 get-area-map JSON 失败', e);
+                }
+            }
+            return resp;
+        };
+
+        // 绑到 XMLHttpRequest
+        const origSend = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.send = function(body) {
+            this.addEventListener('load', () => {
+                if (this.responseURL.includes('/ticket/get-area-map/')) {
+                    try {
+                        const json = JSON.parse(this.responseText);
+                        const areaArray = Object.values(json).map(a => ({
+                            sectionCode: a.sectionCode,
+                            areaStatus: a.areaStatus
+                        }));
+                        window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaArray }));
+                    } catch (e) {
+                        console.error('Hook: 解析 XHR get-area-map 失败', e);
+                    }
+                }
+            });
+            return origSend.call(this, body);
+        };
+    };
+
+    // 把上面函数注入到页面
+    const script = document.createElement('script');
+    script.textContent = `(${pageHook.toString()})();`;
+    document.documentElement.appendChild(script);
+    script.remove();
+
+
+    // ─── 2) userscript 本身的逻辑 ─────────────────────
+
     let dataProcessedOnce = false;
     let randomFallbackTriggered = false;
 
