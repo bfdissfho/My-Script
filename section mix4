@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          section mix4
 // @namespace     http://tampermonkey.net/
-// @version       2025.07.23.2
+// @version       2025.09.02
 // @description   在页面上下文拦截 AJAX，并通过事件发给脚本处理
 // @author        you
 // @match         https://ticketmaster.sg/ticket/area/*
@@ -14,7 +14,7 @@
 (function() {
     'use strict';
 
-    const promo_code_number = '';
+    const promo_code_number = 'TOURMAVIE25';
 
     const want_section = [
         ['field_PB1'],
@@ -200,10 +200,11 @@
     }
 
     function click_section(field) {
-        const sel1 = `#${field}>g:nth-of-type(1)>polygon`;
-        const sel2 = `#${field}>g:nth-of-type(1)>path`;
+        const sel1 = `#${field}>polygon:nth-child(1)`;
+        const sel2 = `#${field}>path:nth-child(1)`;
         let attempts = 0, timer = setInterval(() => {
             attempts++;
+            console.log('12345')
             if (document.querySelector(sel1)) {
                 clearInterval(timer);
                 section_click(sel1);
