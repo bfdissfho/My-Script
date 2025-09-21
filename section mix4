@@ -1,266 +1,420 @@
 // ==UserScript==
-// @name          section mix4
-// @namespace     http://tampermonkey.net/
-// @version       2025.09.02
-// @description   在页面上下文拦截 AJAX，并通过事件发给脚本处理
-// @author        you
-// @match         https://ticketmaster.sg/ticket/area/*
-// @grant         none
-// @run-at        document-start
+// @name         section mix4
+// @namespace    http://tampermonkey.net/
+// @version      2025.09.21
+// @description  abc
+// @match        https://ticketmaster.sg/ticket/area/*
+// @run-at       document-start
 // @updateURL     https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/section%20mix4
 // @downloadURL   https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/section%20mix4
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
 // ==/UserScript==
 
-(function() {
-    'use strict';
+(function () {
+  'use strict';
 
-    const promo_code_number = 'TOURMAVIE25';
+  // ─── Promo Codes 設定 ───────────────────────────────────────────────────────
+  // 可改成 ['5555']；單一 code 成功後會清除索引，下次仍從 0 開始
+  const PROMO_CODES = ['5555', '6666', '7777'];
+  let promoIdx = GM_getValue('promo_idx', 0) || 0;
+  let promoAppliedThisVisit = false; // 本次是否嘗試套用過
+  let promoSavedThisVisit = false;   // 本次是否已寫回（成功才寫回）
+  let promoObserver = null;
 
-    const want_section = [
-        ['field_PB1'],
-        ['field_318','field_324'],
+  // ─── 想要的區域清單（保留你的原表） ──────────────────────────────────────────
+  const want_section = [
+    ["field_212_B", "field_229_B"],
+    ['field_C1', "field_S9"],
+    ['field_PB1'],
+    ['field_318','field_324'],
+    ['field_332','field_331','field_330','field_329','field_328B','field_310B','field_311B','field_312B','field_313','field_314B',],
+    ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
+    ['field_320','field_319','field_318','field_322','field_323','field_324',],
+    ['field_220B','field_231B','field_222B'],
+    ['field_PA5','field_PA3', 'field_PB4','field_PB3','field_PB5','field_PA4', 'field_PA2','field_PB2','field_PB6','field_PA1', 'field_PA6', 'field_PA7', 'field_PA8', 'field_PA9', 'field_PA10', 'field_PB1', 'field_PB7', 'field_PB8', 'field_PB9', 'field_PB10', 'field_PC1', 'field_PC2', 'field_PC3', 'field_PC4', 'field_PC5', 'field_PC6', 'field_PC7', 'field_PC8', 'field_PC9', 'field_PC10', 'field_PD1', 'field_PD2', 'field_PD3', 'field_PD4', 'field_PD5', 'field_PD6', 'field_PD7', 'field_PD8', 'field_PD9', 'field_PD10'],
+    ['field_215','field_216','field_217','field_226','field_225','field_227'],
+    ['field_220B','field_222B',],
+    ['field_221B','field_219B','field_223B','field_224B','field_218B'],
+    ['field_210B','field_211B','field_212B','field_213B','field_214B','field_228B','field_229B','field_230B','field_231B',],
+    ['field_220A','field_222A',],
+    ['field_221A','field_219A','field_223A','field_224A','field_218A'],
+    ['field_210A','field_211A','field_212A','field_213A','field_214A','field_228A','field_229A','field_230A','field_231A',],
+    ['field_PEN_VIP', 'field_PEN_BLINK', 'field_VIP', 'field_VIP_GA'],
+    ['field_PA5','field_PA3', 'field_PB4','field_PB3','field_PB5','field_PA4', 'field_PA2','field_PB2','field_PB6','field_PA1', 'field_PA6', 'field_PA7', 'field_PA8', 'field_PA9', 'field_PA10', 'field_PB1', 'field_PB7', 'field_PB8', 'field_PB9', 'field_PB10', 'field_PC1', 'field_PC2', 'field_PC3', 'field_PC4', 'field_PC5', 'field_PC6', 'field_PC7', 'field_PC8', 'field_PC9', 'field_PC10', 'field_PD1', 'field_PD2', 'field_PD3', 'field_PD4', 'field_PD5', 'field_PD6', 'field_PD7', 'field_PD8', 'field_PD9', 'field_PD10'],
+    ['field_PEN_GA', 'field_PEN_E','field_GA',],
+    ['field_606','field_607','field_645','field_644',],
+    ['field_101','field_102','field_103','field_104','field_147','field_148','field_149','field_150',],
+    ['field_105','field_106','field_107A','field_107B','field_146','field_145','field_144A','field_144B'],
+    ['field_111','field_110','field_109','field_140','field_141','field_142','field_116','field_115','field_114','field_113','field_112','field_135','field_136','field_137','field_137','field_138','field_139','field_636', 'field_637', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643','field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_614', 'field_615'],
+    ['field_405', 'field_406', 'field_407', 'field_408', 'field_409', 'field_410', 'field_411','field_440', 'field_441', 'field_442', 'field_443', 'field_444', 'field_445', 'field_446',],
+    ['field_412','field_413','field_414','field_415','field_436','field_437','field_438','field_439',],
+    ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
+    ['field_320','field_319','field_318','field_322','field_323','field_324',],
+    ['field_216','field_217','field_226','field_225',],
+    ['field_209','field_233','field_221','field_220','field_222',],
+    ['field_214','field_215','field_228','field_227'],
+    ['field_223','field_224','field_219','field_218','field_210','field_211','field_212','field_213','field_229','field_230','field_231','field_232',],
+    ["field_LS_A","field_LS_B","field_LS_C"],
+    ["field_US_A","field_US_B","field_US_C"],
+    ["field_C1_A","field_C1_B","field_C1_H","field_C1_F","field_C1_G","field_C1_D","field_C1_E","field_C1_C","field_C2_A","field_C2_K","field_C2_J","field_C2_G","field_C2_H","field_C2_E","field_C2_F","field_C2_C","field_C2_D","field_C2_B"],
+    ["field_A_B","field_A_DP","field_B_B","field_B_DP","field_C_B","field_C_DP",],
+    ["field_Q","field_S","field_P_A","field_P_B","field_H_B","field_H_A","field_J_B","field_J_A","field_K","field_G","field_U"],
+    ["field_V_A","field_V_B","field_L_B","field_L_A","field_M_A","field_M_B","field_N","field_D","field_BOXA","field_E","field_F","field_BOXC","field_R","field_T"],
+    ["field_STALLS_C","field_STALLS_B","field_STALLS_A","field_STALLS_D","field_STALLS_E"],
+    ["field_BALC2_A","field_BALC2_C","field_BALC2_B","field_BALC2_D","field_BALC1_G","field_BALC1_H","field_BALC1_I","field_BALC1_J","field_BALC1_F","field_BALC1_E","field_BALC1_B","field_BALC1_A","field_BALC1_D","field_BALC1_C",],
+    ["field_S_A","field_S_B","field_S_C",],
+    ["field_D_C","field_D_B","field_D_A",],
+    ["field_UC_B","field_UC_A","field_UC_D","field_UC_C","field_UC_F","field_UC_E",],
+  ];
 
+  // ─── 注入到頁面：攔 fetch + XHR，使用 split/clean 解析 ─────────────────────
+  const pageHook = function () {
+    let lastPayloadStr = '';
 
+    function parseZoneSplit(rawText) {
+  if (typeof rawText !== 'string') {
+    throw new Error('rawText 不是字串');
+  }
 
-        ['field_332','field_331','field_330','field_329','field_328B','field_310B','field_311B','field_312B','field_313','field_314B',],//this
+  // 有些情況是把整段 HTML 用 JSON.stringify 包起來（外層引號 + 反斜線）
+  let pageText = rawText;
+  try {
+    const maybe = JSON.parse(pageText);
+    if (typeof maybe === 'string') pageText = maybe;
+  } catch (_) {
+    // 不是 JSON 字串就忽略
+  }
 
-        ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
-        ['field_320','field_319','field_318','field_322','field_323','field_324',],
-        ['field_220B','field_231B','field_222B'],
-        ['field_PA5','field_PA3', 'field_PB4','field_PB3','field_PB5','field_PA4', 'field_PA2','field_PB2','field_PB6','field_PA1', 'field_PA6', 'field_PA7', 'field_PA8', 'field_PA9', 'field_PA10', 'field_PB1', 'field_PB7', 'field_PB8', 'field_PB9', 'field_PB10', 'field_PC1', 'field_PC2', 'field_PC3', 'field_PC4', 'field_PC5', 'field_PC6', 'field_PC7', 'field_PC8', 'field_PC9', 'field_PC10', 'field_PD1', 'field_PD2', 'field_PD3', 'field_PD4', 'field_PD5', 'field_PD6', 'field_PD7', 'field_PD8', 'field_PD9', 'field_PD10'],
+  // 1) 'var zone = ' 檢查
+  let b = pageText.split('var zone = ')[1];
+  if (!b) {
+    console.log("B 頁面：'var zone =' 未找到。可能頁面內容尚未完全加載。");
+    throw new Error("找不到 'var zone = ' 片段");
+  }
+  b = b.trim();
 
-        ['field_215','field_216','field_217','field_226','field_225','field_227'],//this
-        ['field_220B','field_222B',],//this
-        ['field_221B','field_219B','field_223B','field_224B','field_218B'],//this
-        ['field_210B','field_211B','field_212B','field_213B','field_214B','field_228B','field_229B','field_230B','field_231B',],//this
-        ['field_220A','field_222A',],//this
-        ['field_221A','field_219A','field_223A','field_224A','field_218A'],//this
-        ['field_210A','field_211A','field_212A','field_213A','field_214A','field_228A','field_229A','field_230A','field_231A',],//this
+  // 2) 到 'fieldImageType' 之前
+  let c = b.split('fieldImageType')[0];
+  if (!c) {
+    console.log("B 頁面：'fieldImageType' 未找到。");
+    throw new Error("找不到 'fieldImageType' 之前的內容");
+  }
+  c = c.trim();
 
+  // 3) 切到 '}]}},'（你的頁面結束錨點）
+  let d = c.split('}]}},')[0];
+  if (!d) {
+    console.log("B 頁面：'}]}},' 未找到。");
+    throw new Error("找不到結束標記 '}]}},'");
+  }
+  d = d.trim();
 
+  // 4) 補齊結尾，得到類 JSON 區塊
+  let e = d + '}]}}';
 
+  // 5) 去掉反斜線（照你的要求做；注意：這可能會移除合法轉義）
+  const stringWithoutBackslashes = e.replace(/\\/g, '');
 
-        ['field_PEN_VIP', 'field_PEN_BLINK', 'field_VIP', 'field_VIP_GA'],
-        ['field_PA5','field_PA3', 'field_PB4','field_PB3','field_PB5','field_PA4', 'field_PA2','field_PB2','field_PB6','field_PA1', 'field_PA6', 'field_PA7', 'field_PA8', 'field_PA9', 'field_PA10', 'field_PB1', 'field_PB7', 'field_PB8', 'field_PB9', 'field_PB10', 'field_PC1', 'field_PC2', 'field_PC3', 'field_PC4', 'field_PC5', 'field_PC6', 'field_PC7', 'field_PC8', 'field_PC9', 'field_PC10', 'field_PD1', 'field_PD2', 'field_PD3', 'field_PD4', 'field_PD5', 'field_PD6', 'field_PD7', 'field_PD8', 'field_PD9', 'field_PD10'],
-        ['field_PEN_GA', 'field_PEN_E','field_GA',],
-        ['field_606','field_607','field_645','field_644',],
-        ['field_101','field_102','field_103','field_104','field_147','field_148','field_149','field_150',],
-        ['field_105','field_106','field_107A','field_107B','field_146','field_145','field_144A','field_144B'],
-        ['field_111','field_110','field_109','field_140','field_141','field_142','field_116','field_115','field_114','field_113','field_112','field_135','field_136','field_137','field_137','field_138','field_139','field_636', 'field_637', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643','field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_614', 'field_615'],
-        ['field_405', 'field_406', 'field_407', 'field_408', 'field_409', 'field_410', 'field_411','field_440', 'field_441', 'field_442', 'field_443', 'field_444', 'field_445', 'field_446',],
-        ['field_412','field_413','field_414','field_415','field_436','field_437','field_438','field_439',],
+  // 6) 從第一個 '{' 起頭取 JSON 主體
+  let cleanedE = stringWithoutBackslashes.substring(stringWithoutBackslashes.indexOf('{'));
+  if (!cleanedE || cleanedE[0] !== '{') {
+    console.log("B 頁面：找不到 JSON 起始 '{'。");
+    throw new Error("清理後字串中沒有 '{'");
+  }
 
+  // 7) 移除任何混入的 HTML 標籤（關鍵：避免 innerHTML/腳本雜訊）
+  cleanedE = cleanedE.replace(/<[^>]*>/g, '');
 
-        ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
-        ['field_320','field_319','field_318','field_322','field_323','field_324',],
-        ['field_216','field_217','field_226','field_225',],
-        ['field_209','field_233','field_221','field_220','field_222',],
-        ['field_214','field_215','field_228','field_227'],
-        ['field_223','field_224','field_219','field_218','field_210','field_211','field_212','field_213','field_229','field_230','field_231','field_232',],
+  // 可選：再做一次簡單的截斷，避免多出尾巴
+  // 嘗試找到最後一個配對的大括號位置（保守做法）
+  // （若頁面固定且上面步驟已足夠，可省略此段）
+  {
+    let depth = 0, lastValidEnd = -1;
+    for (let i = 0; i < cleanedE.length; i++) {
+      const ch = cleanedE[i];
+      if (ch === '{') depth++;
+      else if (ch === '}') {
+        depth--;
+        if (depth === 0) lastValidEnd = i + 1;
+      }
+    }
+    if (lastValidEnd > 0) cleanedE = cleanedE.slice(0, lastValidEnd);
+  }
 
+  // 8) 解析成物件
+  try {
+    const dataObject = JSON.parse(cleanedE);
+    return dataObject; // zone 物件
+  } catch (err) {
+    console.log("處理後的 cleanedE (準備解析):", cleanedE);
+    throw new Error("JSON 解析錯誤：" + (err && (err.message || err)));
+  }
+}
 
+    function toAreaData(zone) {
+      return Object.values(zone).map(a => ({
+        sectionCode: a.sectionCode,
+        areaStatus: a.areaStatus,
+      }));
+    }
 
-        ["field_LS_A","field_LS_B","field_LS_C"],
-        ["field_US_A","field_US_B","field_US_C"],
-        ["field_C1_A","field_C1_B","field_C1_H","field_C1_F","field_C1_G","field_C1_D","field_C1_E","field_C1_C","field_C2_A","field_C2_K","field_C2_J","field_C2_G","field_C2_H","field_C2_E","field_C2_F","field_C2_C","field_C2_D","field_C2_B"],
+    function maybeDispatch(areaData, where) {
+      try {
+        const payloadStr = JSON.stringify(areaData);
+        if (payloadStr === lastPayloadStr) return;
+        lastPayloadStr = payloadStr;
+      } catch (_) {}
+      console.log('[pageHook:'+where+'] sectionCodes:', areaData.map(x => x.sectionCode));
+      console.log('[pageHook:'+where+'] AVAILABLE 數量：', areaData.filter(x => x.areaStatus === 'AVAILABLE').length);
+      window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaData }));
+    }
 
-
-        ["field_A_B","field_A_DP","field_B_B","field_B_DP","field_C_B","field_C_DP",],
-        ["field_Q","field_S","field_P_A","field_P_B","field_H_B","field_H_A","field_J_B","field_J_A","field_K","field_G","field_U"],
-        ["field_V_A","field_V_B","field_L_B","field_L_A","field_M_A","field_M_B","field_N","field_D","field_BOXA","field_E","field_F","field_BOXC","field_R","field_T"],
-
-
-
-        ["field_STALLS_C","field_STALLS_B","field_STALLS_A","field_STALLS_D","field_STALLS_E"],
-        ["field_BALC2_A","field_BALC2_C","field_BALC2_B","field_BALC2_D","field_BALC1_G","field_BALC1_H","field_BALC1_I","field_BALC1_J","field_BALC1_F","field_BALC1_E","field_BALC1_B","field_BALC1_A","field_BALC1_D","field_BALC1_C",],
-
-
-
-        ["field_S_A","field_S_B","field_S_C",],
-        ["field_D_C","field_D_B","field_D_A",],
-        ["field_UC_B","field_UC_A","field_UC_D","field_UC_C","field_UC_F","field_UC_E",],
-    ];
-
-
-    // ─── 1) 注入到页面上下文的脚本 ─────────────────────
-    const pageHook = function() {
-        // 绑到 window.fetch
-        const origFetch = window.fetch.bind(window);
-        window.fetch = async function(input, init) {
-            const resp = await origFetch(input, init);
-            if (typeof input === 'string' && input.includes('/ticket/get-area-map/')) {
-                // 只对目标接口做 JSON 解析
-                try {
-                    const json = await resp.clone().json();
-                    const areaArray = Object.values(json).map(a => ({
-                        sectionCode: a.sectionCode,
-                        areaStatus: a.areaStatus
-                    }));
-                    // 发事件给 userscript
-                    window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaArray }));
-                } catch (e) {
-                    console.error('Hook: 解析 get-area-map JSON 失败', e);
-                }
-            }
-            return resp;
-        };
-
-        // 绑到 XMLHttpRequest
-        const origSend = XMLHttpRequest.prototype.send;
-        XMLHttpRequest.prototype.send = function(body) {
-            this.addEventListener('load', () => {
-                if (this.responseURL.includes('/ticket/get-area-map/')) {
-                    try {
-                        const json = JSON.parse(this.responseText);
-                        const areaArray = Object.values(json).map(a => ({
-                            sectionCode: a.sectionCode,
-                            areaStatus: a.areaStatus
-                        }));
-                        window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaArray }));
-                    } catch (e) {
-                        console.error('Hook: 解析 XHR get-area-map 失败', e);
-                    }
-                }
-            });
-            return origSend.call(this, body);
-        };
+    // fetch hook
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async function (input, init) {
+      const resp = await origFetch(input, init);
+      if (typeof input === 'string' && input.includes('/ticket/get-area-map/')) {
+        try {
+          const raw = await resp.clone().text();
+          const zone = parseZoneSplit(raw);
+          const areaData = toAreaData(zone);
+          maybeDispatch(areaData, 'fetch');
+        } catch (e) {
+          console.error('[pageHook:fetch] 解析 get-area-map 失敗：', e && (e.stack || e.message || e));
+        }
+      }
+      return resp;
     };
 
-    // 把上面函数注入到页面
-    const script = document.createElement('script');
-    script.textContent = `(${pageHook.toString()})();`;
-    document.documentElement.appendChild(script);
-    script.remove();
-
-
-    // ─── 2) userscript 本身的逻辑 ─────────────────────
-
-    let dataProcessedOnce = false;
-    let randomFallbackTriggered = false;
-
-    // 收到页面上下文的区域数据后触发
-    window.addEventListener('areaDataReady', e => {
-        process_available_areas(e.detail);
-    });
-
-    function process_available_areas(areaData) {
-        if (dataProcessedOnce) return;
-        console.log("开始处理区域数据：", areaData);
-        let found = false;
-
-        for (const subList of want_section) {
-            const matched = [];
-            const available = [];
-            for (const code of subList) {
-                const info = areaData.find(a => a.sectionCode === code);
-                if (info) {
-                    matched.push(code);
-                    if (info.areaStatus === 'AVAILABLE') available.push(code);
-                }
-            }
-            if (matched.length > 0 && available.length >= matched.length / 2) {
-                const pick = available[Math.floor(Math.random() * available.length)];
-                console.log(`子列表 [${subList}] 符合条件，选中 ${pick}`);
-                click_section(pick);
-                found = true;
-                break;
-            }
+    // XHR hook
+    const origOpen = XMLHttpRequest.prototype.open;
+    const origSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function(method, url) {
+      this.__tm_url = url;
+      return origOpen.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function (body) {
+      this.addEventListener('load', () => {
+        const url = this.__tm_url || this.responseURL || '';
+        if (url.includes('/ticket/get-area-map/')) {
+          try {
+            const raw = this.responseText;
+            const zone = parseZoneSplit(raw);
+            const areaData = toAreaData(zone);
+            maybeDispatch(areaData, 'XHR');
+          } catch (e) {
+            console.error('[pageHook:XHR] 解析 get-area-map 失敗：', e && (e.stack || e.message || e));
+          }
         }
+      });
+      return origSend.call(this, body);
+    };
+  };
 
-        if (!found && !randomFallbackTriggered) {
-            randomFallbackTriggered = true;
-            console.log("未找到理想区域，走随机备援…");
-            wait_for_sections_then_click();
+  // 注入 page realm
+  const script = document.createElement('script');
+  script.textContent = `(${pageHook.toString()})();`;
+  document.documentElement.appendChild(script);
+  script.remove();
+
+  // ─── Userscript 端：自動挑區流程 ────────────────────────────────────────────
+  let dataProcessedOnce = false;
+  let randomFallbackTriggered = false;
+  let clickedOnce = false;
+
+  window.addEventListener('areaDataReady', e => {
+    const areaData = e.detail || [];
+    console.log('[userscript] areaData count:', areaData.length);
+    console.log('[userscript] sectionCodes:', areaData.map(x => x?.sectionCode ?? '<<no sectionCode>>'));
+    process_available_areas(areaData);
+  });
+
+  function process_available_areas(areaData) {
+    if (dataProcessedOnce) return;
+    console.log("开始处理区域数据：", areaData);
+
+    let found = false;
+    for (const subList of want_section) {
+      const matched = [];
+      const available = [];
+      for (const code of subList) {
+        const info = areaData.find(a => a.sectionCode === code);
+        if (info) {
+          matched.push(code);
+          if (info.areaStatus === 'AVAILABLE') available.push(code);
         }
-        dataProcessedOnce = true;
+      }
+      if (matched.length > 0 && available.length >= matched.length / 2) {
+        const pick = available[Math.floor(Math.random() * available.length)];
+        console.log(`子列表 [${subList}] 符合条件，选中 ${pick}`);
+        highlight(pick);
+        click_section(pick);
+        found = true;
+        break;
+      }
     }
+    if (!found && !randomFallbackTriggered) {
+      randomFallbackTriggered = true;
+      console.log("未找到理想区域，走随机备援…");
+      wait_for_sections_then_click();
+    }
+    dataProcessedOnce = true;
+  }
 
-    function wait_for_sections_then_click() {
-        const iv = setInterval(() => {
-            const all = Array.from(document.querySelectorAll('g[id^="field_"]'));
-            if (all.length === 0) return;
-            clearInterval(iv);
-            const nonEmpty = all.filter(s => !s.classList.contains('empty'));
-            if (nonEmpty.length === 0) {
-                console.log("所有 section 都 empty，刷新页面");
-                setTimeout(() => location.reload(), 5000);
-                return;
-            }
-            const pick = nonEmpty[Math.floor(Math.random() * nonEmpty.length)].id;
-            console.log("随机备援挑到：", pick);
-            setTimeout(() => click_section(pick), 500);
-        }, 1000);
-    }
+  function wait_for_sections_then_click() {
+    const iv = setInterval(() => {
+      const all = Array.from(document.querySelectorAll('g[id^="field_"]'));
+      if (all.length === 0) return;
+      clearInterval(iv);
+      const nonEmpty = all.filter(s => {
+        const cs = getComputedStyle(s);
+        return !s.classList.contains('empty') && cs.opacity !== '0' && cs.pointerEvents !== 'none';
+      });
+      if (nonEmpty.length === 0) {
+        console.log("所有 section 都 empty，刷新页面");
+        setTimeout(() => location.reload(), 5000);
+        return;
+      }
+      const pick = nonEmpty[Math.floor(Math.random() * nonEmpty.length)].id;
+      console.log("随机备援挑到：", pick);
+      highlight(pick);
+      setTimeout(() => click_section(pick), 500);
+    }, 1000);
+  }
 
-    function section_click(sel) {
-        const el = document.querySelector(sel);
-        if (!el) return false;
-        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-        return true;
+  // 依序派發 pointer/mouse 事件（不帶 view）
+  function section_click(sel) {
+    const el = document.querySelector(sel);
+    if (!el) return false;
+    const seq = [
+      ['pointerdown', window.PointerEvent],
+      ['mousedown', window.MouseEvent],
+      ['mouseup',   window.MouseEvent],
+      ['click',     window.MouseEvent],
+    ];
+    for (const [type, Ctor] of seq) {
+      if (!Ctor) continue; // 某些環境沒有 PointerEvent
+      try { el.dispatchEvent(new Ctor(type, { bubbles: true, cancelable: true })); }
+      catch (e) { /* ignore */ }
     }
+    return true;
+  }
 
-    function click_section(field) {
-        const sel1 = `#${field}>polygon:nth-child(1)`;
-        const sel2 = `#${field}>path:nth-child(1)`;
-        let attempts = 0, timer = setInterval(() => {
-            attempts++;
-            console.log('12345')
-            if (document.querySelector(sel1)) {
-                clearInterval(timer);
-                section_click(sel1);
-                ticket_price_loop();
-            } else if (document.querySelector(sel2)) {
-                clearInterval(timer);
-                section_click(sel2);
-                ticket_price_loop();
-            } else if (attempts >= 20) {
-                clearInterval(timer);
-                console.warn(`点击 ${field} 超时`);
-            }
-        }, 500);
-    }
+  // 加入 sel3 / sel4
+  function click_section(field) {
+    if (clickedOnce) return;
+    const sel1 = `#${field}>polygon:nth-child(1)`;
+    const sel2 = `#${field}>path:nth-child(1)`;
+    const sel3 = `#${field}> g:nth-child(1)>polygon`;
+    const sel4 = `#${field}> g:nth-child(1)>path`;
 
-    function ticket_price_loop() {
-        const iv = setInterval(() => {
-            const sel = document.querySelector('.w100.form-select');
-            if (!sel) return;
-            clearInterval(iv);
-            sel.selectedIndex = sel.options.length - 1;
-            const btn = document.getElementById('autoMode');
-            if (btn) btn.click();
-        }, 1000);
-    }
+    let attempts = 0;
+    const timer = setInterval(() => {
+      attempts++;
+      console.log('12345');
+      const t1 = document.querySelector(sel1);
+      const t2 = document.querySelector(sel2);
+      const t3 = document.querySelector(sel3);
+      const t4 = document.querySelector(sel4);
+      const sel = t1 ? sel1 : t2 ? sel2 : t3 ? sel3 : t4 ? sel4 : null;
 
-    function remove_adblock_loop() {
-        const iv = setInterval(() => {
-            let removed = false;
-            const m = document.querySelector('div.modal-backdrop.fade.show');
-            const a = document.getElementById('adblockModal');
-            if (m) { m.remove(); removed = true; }
-            if (a) { a.remove(); removed = true; }
-            if (removed && !document.querySelector('div.modal-backdrop.fade.show') && !document.getElementById('adblockModal')) {
-                clearInterval(iv);
-            }
-        }, 1000);
-    }
+      if (sel) {
+        clearInterval(timer);
+        clickedOnce = true;
+        section_click(sel);
+        ticket_price_loop();
+      } else if (attempts >= 30) {
+        clearInterval(timer);
+        console.warn(`点击 ${field} 超时`);
+      }
+    }, 300);
+  }
+
+  function ticket_price_loop() {
+    const start = Date.now();
+    const iv = setInterval(() => {
+      const sel = document.querySelector('.w100.form-select');
+      if (sel) {
+        clearInterval(iv);
+        sel.selectedIndex = sel.options.length - 1; // 最高價
+        const btn = document.getElementById('autoMode');
+        if (btn) {
+          // 這裡不進位索引；我們只在成功訊息出現時更新/清除
+          btn.click();
+        }
+      } else if (Date.now() - start > 4000 && !clickedOnce) {
+        clearInterval(iv);
+        console.log('價錢選單尚未出現，可於此實作重試點擊（若需要）。');
+      }
+    }, 250);
+  }
+
+  function highlight(field) {
+    const g = document.getElementById(field);
+    if (!g) return;
+    g.style.outline = '3px solid red';
+    g.style.transition = 'outline 0.2s ease';
+    setTimeout(() => g && (g.style.outline = ''), 2500);
+  }
+
+  function remove_adblock_loop() {
+    const iv = setInterval(() => {
+      let removed = false;
+      const m = document.querySelector('div.modal-backdrop.fade.show');
+      const a = document.getElementById('adblockModal');
+      if (m) { m.remove(); removed = true; }
+      if (a) { a.remove(); removed = true; }
+      if (removed && !document.querySelector('div.modal-backdrop.fade.show') && !document.getElementById('adblockModal')) {
+        clearInterval(iv);
+      }
+    }, 1000);
+  }
+
+
 
     function promo_code() {
+        if (!Array.isArray(PROMO_CODES) || PROMO_CODES.length === 0) return;
+
         const msg = document.querySelector('div.text-bold');
-        if (msg && msg.textContent.includes('successfully applied')) return;
+        if (msg && /successfully applied/i.test(msg.textContent)) return;
+
+        const code = PROMO_CODES[promoIdx] || '';
+        if (!code) return;
+
         const inp = document.getElementById('checkCode');
         const btn = document.querySelector('.check-discount');
         if (inp && btn) {
-            inp.value = promo_code_number;
+            // 先填入代碼
+            inp.value = code;
+
+            // 這裡就更新索引：若是最後一個 → 清除；否則 → +1
+            const lastIdx = PROMO_CODES.length - 1;
+            if (promoIdx >= lastIdx) {
+                if (typeof GM_deleteValue === 'function') GM_deleteValue('promo_idx');
+                else try { localStorage.removeItem('promo_idx'); } catch(_) {}
+                console.log('[promo] 已輸入最後一個 code，清除儲存（下次從 0 開始）');
+            } else {
+                GM_setValue('promo_idx', promoIdx + 1);
+                console.log(`[promo] 已記錄下次索引：${promoIdx + 1}`);
+            }
+
+            // 再按下套用
             btn.click();
+            promoAppliedThisVisit = true;
+            promoSavedThisVisit = true; // 已經在這裡處理過索引
+            console.log(`[promo] 已嘗試套用 promo code：${code}（索引 ${promoIdx}）`);
         }
     }
 
-    function refresh() { location.reload(); }
 
-    window.addEventListener('load', () => {
-        console.log('A 页面加载完成，启用后台流程');
-        remove_adblock_loop();
-        promo_code();
-        setTimeout(refresh, 8000);
-    });
+  function refresh() { location.reload(); }
+
+  window.addEventListener('load', () => {
+    console.log('A 页面加载完成，启用后台流程');
+    remove_adblock_loop();
+    promo_code();
+    // setTimeout(refresh, 8000); // 如需自動刷新可打開
+  });
 })();
