@@ -415,6 +415,6 @@
     console.log('A 页面加载完成，启用后台流程');
     remove_adblock_loop();
     promo_code();
-    // setTimeout(refresh, 8000); // 如需自動刷新可打開
+    setTimeout(refresh, 8000); // 如需自動刷新可打開
   });
 })();
