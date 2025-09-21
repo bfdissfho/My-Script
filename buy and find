@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         buyticket findticket
 // @namespace    http://tampermonkey.net/
-// @version      2025-07-23
+// @version      2025-09-21
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/activity/detail/*
 // @match        https://ticketmaster.sg/activity/game/*
@@ -16,7 +16,7 @@
     'use strict';
 
     // 設定想要點擊的按鈕索引：數字字串，如 '0','1','2'…；或 'random' 隨機
-    const want_date = 'random'; // <- 改成你想要的索引，或 'random'
+    const want_date = '0'; // <- 改成你想要的索引，或 'random'
 
     function click_buyticket() {
         // 點擊 Buy Ticket
