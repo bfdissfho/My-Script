@@ -25,6 +25,17 @@
 
   // ─── 想要的區域清單（保留你的原表） ──────────────────────────────────────────
   const want_section = [
+      ['field_PEN_BLINK'],
+      ['field_PA2','field_PA3','field_PA5','field_PA6','field_PB3','field_PB4','field_PB5'],
+      ['field_105','field_106','field_107A','field_107B','field_146','field_145','field_144A','field_144B'],
+      ['field_101','field_102','field_103','field_104','field_147','field_148','field_149','field_150',],
+      ['field_606','field_607','field_645','field_644',],
+      ['field_111','field_110','field_109','field_140','field_141','field_142','field_116','field_115','field_114','field_113','field_112','field_135','field_136','field_137','field_137','field_138','field_139',],
+      ['field_636', 'field_637', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643','field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_614', 'field_615'],
+
+      ['field_PB1','field_PB1','field_PB1','field_PB1','field_PB1','field_PB1','field_PB1','field_PB1','field_PB1',],
+      [],
+      [],
     ["field_212_B", "field_229_B"],
     ['field_C1', "field_S9"],
     ['field_PB1'],
@@ -41,13 +52,10 @@
     ['field_220A','field_222A',],
     ['field_221A','field_219A','field_223A','field_224A','field_218A'],
     ['field_210A','field_211A','field_212A','field_213A','field_214A','field_228A','field_229A','field_230A','field_231A',],
-    ['field_PEN_VIP', 'field_PEN_BLINK', 'field_VIP', 'field_VIP_GA'],
+    ['field_PEN_VIP', 'field_VIP', 'field_VIP_GA'],
     ['field_PA5','field_PA3', 'field_PB4','field_PB3','field_PB5','field_PA4', 'field_PA2','field_PB2','field_PB6','field_PA1', 'field_PA6', 'field_PA7', 'field_PA8', 'field_PA9', 'field_PA10', 'field_PB1', 'field_PB7', 'field_PB8', 'field_PB9', 'field_PB10', 'field_PC1', 'field_PC2', 'field_PC3', 'field_PC4', 'field_PC5', 'field_PC6', 'field_PC7', 'field_PC8', 'field_PC9', 'field_PC10', 'field_PD1', 'field_PD2', 'field_PD3', 'field_PD4', 'field_PD5', 'field_PD6', 'field_PD7', 'field_PD8', 'field_PD9', 'field_PD10'],
     ['field_PEN_GA', 'field_PEN_E','field_GA',],
-    ['field_606','field_607','field_645','field_644',],
-    ['field_101','field_102','field_103','field_104','field_147','field_148','field_149','field_150',],
-    ['field_105','field_106','field_107A','field_107B','field_146','field_145','field_144A','field_144B'],
-    ['field_111','field_110','field_109','field_140','field_141','field_142','field_116','field_115','field_114','field_113','field_112','field_135','field_136','field_137','field_137','field_138','field_139','field_636', 'field_637', 'field_638', 'field_639', 'field_640', 'field_641', 'field_642', 'field_643','field_608', 'field_609', 'field_610', 'field_611', 'field_612', 'field_613', 'field_614', 'field_615'],
+
     ['field_405', 'field_406', 'field_407', 'field_408', 'field_409', 'field_410', 'field_411','field_440', 'field_441', 'field_442', 'field_443', 'field_444', 'field_445', 'field_446',],
     ['field_412','field_413','field_414','field_415','field_436','field_437','field_438','field_439',],
     ['field_332','field_331','field_330','field_329','field_328','field_310','field_311','field_312','field_313','field_314',],
