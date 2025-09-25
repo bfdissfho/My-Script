@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         section mix4
 // @namespace    http://tampermonkey.net/
-// @version      2025.09.22
+// @version      2025.09.25
 // @description  abc
 // @match        https://ticketmaster.sg/ticket/area/*
 // @run-at       document-start
@@ -426,6 +426,6 @@
     console.log('A 页面加载完成，启用后台流程');
     remove_adblock_loop();
     promo_code();
-    setTimeout(refresh, 8000); // 如需自動刷新可打開
+    setTimeout(refresh, 12000); // 如需自動刷新可打開
   });
 })();
