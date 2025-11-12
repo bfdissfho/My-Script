@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         buyticket findticket
 // @namespace    http://tampermonkey.net/
-// @version      2025-09-21
+// @version      2025-11-12
 // @description  My Tampermonkey script
 // @match        https://ticketmaster.sg/activity/detail/*
 // @match        https://ticketmaster.sg/activity/game/*
@@ -23,10 +23,10 @@
         const buy_ticket = document.querySelector(
             "#main-container > section.whiteNav.shadow.sticky-top > div > div > div.col-lg-3.col-md-3.col-sm-3.col-xs-12.col-12.pt-3.py-sm-2.order-1.order-sm-2 > a"
         );
-        if (buy_ticket) {
+
             buy_ticket.click();
             setTimeout(click_findticket, 2000);
-        }
+
     }
 
     function click_findticket() {
