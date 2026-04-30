@@ -5,7 +5,8 @@
 // @description  Map
 // @match        https://ticketmaster.sg/ticket/area/*
 // @run-at       document-start
-
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/sg_read_price
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/sg_read_price
 // @grant        GM_getValue
 // @grant        GM_setValue
 // @grant        GM_deleteValue
