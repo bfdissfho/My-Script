@@ -1,0 +1,383 @@
+// ==UserScript==
+// @name         sg read price
+// @namespace    http://tampermonkey.net/
+// @version      2026.04.30.3
+// @description  Map
+// @match        https://ticketmaster.sg/ticket/area/*
+// @run-at       document-start
+
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_deleteValue
+// ==/UserScript==
+
+(function () {
+  'use strict';
+
+  // ─── Promo Codes 設定 ───────────────────────────────────────────────────────
+  const PROMO_CODES = ['5555', '6666', '7777'];
+  let promoIdx = GM_getValue('promo_idx', 0) || 0;
+
+  // ─── 注入到頁面：攔 fetch + XHR ─────────────────────────────────────────────
+  const pageHook = function () {
+    let lastPayloadStr = '';
+
+    // 使用你原本運作完美的解析邏輯
+    function parseZoneSplit(rawText) {
+      if (typeof rawText !== 'string') throw new Error('rawText 不是字串');
+      let pageText = rawText;
+      try {
+        const maybe = JSON.parse(pageText);
+        if (typeof maybe === 'string') pageText = maybe;
+      } catch (_) {}
+
+      let b = pageText.split('var zone = ')[1];
+      if (!b) throw new Error("找不到 'var zone = ' 片段");
+      b = b.trim();
+
+      let c = b.split('fieldImageType')[0];
+      if (!c) throw new Error("找不到 'fieldImageType' 之前的內容");
+      c = c.trim();
+
+      let d = c.split('}]}},')[0];
+      if (!d) throw new Error("找不到結束標記 '}]}},'");
+      d = d.trim();
+
+      let e = d + '}]}}';
+      const stringWithoutBackslashes = e.replace(/\\/g, '');
+
+      let cleanedE = stringWithoutBackslashes.substring(stringWithoutBackslashes.indexOf('{'));
+      if (!cleanedE || cleanedE[0] !== '{') throw new Error("清理後字串中沒有 '{'");
+
+      cleanedE = cleanedE.replace(/<[^>]*>/g, '');
+
+      {
+        let depth = 0, lastValidEnd = -1;
+        for (let i = 0; i < cleanedE.length; i++) {
+          const ch = cleanedE[i];
+          if (ch === '{') depth++;
+          else if (ch === '}') {
+            depth--;
+            if (depth === 0) lastValidEnd = i + 1;
+          }
+        }
+        if (lastValidEnd > 0) cleanedE = cleanedE.slice(0, lastValidEnd);
+      }
+
+      try {
+        return JSON.parse(cleanedE);
+      } catch (err) {
+        throw new Error("JSON 解析錯誤：" + (err && (err.message || err)));
+      }
+    }
+
+    function toAreaData(zone) {
+      return Object.values(zone).map(a => {
+        let priceVal = '';
+        if (a.price && Array.isArray(a.price) && a.price.length > 0) {
+          priceVal = a.price[0].ticketPrice;
+        }
+        return {
+          sectionCode: a.sectionCode,
+          areaStatus: a.areaStatus,
+          ticketPrice: priceVal,
+          groupName: a.groupName || 'Unknown',
+          areaColor: a.areaColor || 'cccccc',
+          groupOrder: parseInt(a.groupOrder) || 999
+        };
+      });
+    }
+
+    function maybeDispatch(areaData, where) {
+      try {
+        const payloadStr = JSON.stringify(areaData);
+        if (payloadStr === lastPayloadStr) return;
+        lastPayloadStr = payloadStr;
+      } catch (_) {}
+      window.dispatchEvent(new CustomEvent('areaDataReady', { detail: areaData }));
+    }
+
+    const origFetch = window.fetch.bind(window);
+    window.fetch = async function (input, init) {
+      const resp = await origFetch(input, init);
+      if (typeof input === 'string' && input.includes('/ticket/get-area-map/')) {
+        try {
+          const raw = await resp.clone().text();
+          const zone = parseZoneSplit(raw);
+          const areaData = toAreaData(zone);
+          maybeDispatch(areaData, 'fetch');
+        } catch (e) { console.error('[pageHook:fetch] 解析失敗：', e); }
+      }
+      return resp;
+    };
+
+    const origOpen = XMLHttpRequest.prototype.open;
+    const origSend = XMLHttpRequest.prototype.send;
+    XMLHttpRequest.prototype.open = function(method, url) {
+      this.__tm_url = url;
+      return origOpen.apply(this, arguments);
+    };
+    XMLHttpRequest.prototype.send = function (body) {
+      this.addEventListener('load', () => {
+        const url = this.__tm_url || this.responseURL || '';
+        if (url.includes('/ticket/get-area-map/')) {
+          try {
+            const raw = this.responseText;
+            const zone = parseZoneSplit(raw);
+            const areaData = toAreaData(zone);
+            maybeDispatch(areaData, 'XHR');
+          } catch (e) { console.error('[pageHook:XHR] 解析失敗：', e); }
+        }
+      });
+      return origSend.call(this, body);
+    };
+  };
+
+  const script = document.createElement('script');
+  script.textContent = `(${pageHook.toString()})();`;
+  document.documentElement.appendChild(script);
+  script.remove();
+
+  // ─── Userscript 端：UI 顯示與複製流程 ─────────────────────────────────
+  let currentAreaData = [];
+
+  window.addEventListener('areaDataReady', e => {
+    currentAreaData = e.detail || [];
+    update_info_panel(currentAreaData);
+  });
+
+  function update_info_panel(areaData) {
+    if (!document.body) return;
+
+    let panel = document.getElementById('tm-area-info-panel');
+    if (!panel) {
+      panel = document.createElement('div');
+      panel.id = 'tm-area-info-panel';
+      panel.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        background: rgba(15, 23, 42, 0.95);
+        color: #f8fafc;
+        z-index: 999999;
+        padding: 16px;
+        border-radius: 8px;
+        border: 1px solid #334155;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 14px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      `;
+      document.body.appendChild(panel);
+
+      document.addEventListener('mouseover', (e) => {
+        const hoverContent = document.getElementById('tm-hover-content');
+        if (!hoverContent) return;
+
+        const g = e.target.closest('g[id^="field_"]');
+        if (g) {
+            const secCode = g.id;
+            const info = currentAreaData.find(a => a.sectionCode === secCode);
+            if (info) {
+                const priceDisplay = info.ticketPrice ? info.ticketPrice : '未知';
+                const statusColor = info.areaStatus === 'AVAILABLE' ? '#10b981' : (info.areaStatus === 'UNAVAILABLE' ? '#ef4444' : '#f59e0b');
+
+                hoverContent.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                       <div>
+                          <div style="font-size: 16px; font-weight: bold; color: #a78bfa;">${info.sectionCode}</div>
+                          <div style="color: ${statusColor}; font-size: 12px; margin-top: 2px;">${info.areaStatus}</div>
+                       </div>
+                       <div style="color: #10b981; font-size: 20px; font-weight: bold; font-family: monospace;">${priceDisplay}</div>
+                    </div>
+                `;
+            } else {
+                hoverContent.innerHTML = `
+                    <div style="font-size: 16px; font-weight: bold; color: #a78bfa;">${secCode}</div>
+                    <div style="color: #94a3b8; font-size: 12px; margin-top: 2px;">無座位資料</div>
+                `;
+            }
+        } else {
+            hoverContent.innerHTML = '<div style="color: #94a3b8; font-size: 13px; text-align: center; margin: 8px 0;">請將滑鼠移至左側地圖區域</div>';
+        }
+      });
+    }
+
+    const legendMap = new Map();
+    areaData.forEach(a => {
+      if (a.groupName && a.groupName !== 'Unknown') {
+        if (!legendMap.has(a.groupName)) {
+          legendMap.set(a.groupName, {
+            name: a.groupName,
+            color: a.areaColor.startsWith('#') ? a.areaColor : `#${a.areaColor}`,
+            price: a.ticketPrice || '未知',
+            order: a.groupOrder,
+            refSections: []
+          });
+        }
+        if (a.areaStatus !== 'UNAVAILABLE') {
+          legendMap.get(a.groupName).refSections.unshift(a.sectionCode);
+        } else {
+          legendMap.get(a.groupName).refSections.push(a.sectionCode);
+        }
+      }
+    });
+
+    function renderLegendHtml() {
+      const legendContainer = document.getElementById('tm-legend-container');
+      if (!legendContainer) return;
+
+      const legendItems = Array.from(legendMap.values()).sort((a, b) => a.order - b.order);
+      let legendHtml = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+      legendItems.forEach(item => {
+        legendHtml += `
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <div style="width: 24px; height: 14px; background-color: ${item.color}; border-radius: 3px; box-shadow: 0 0 3px rgba(0,0,0,0.4);"></div>
+              <div style="color: #e2e8f0; font-size: 13px;">${item.name}</div>
+            </div>
+            <div style="color: #cbd5e1; font-size: 13px; font-family: monospace;">${item.price}</div>
+          </div>
+        `;
+      });
+      legendHtml += '</div>';
+      legendContainer.innerHTML = legendHtml;
+    }
+
+    panel.innerHTML = `
+      <div style="margin-bottom: 16px; padding: 12px; background: rgba(30, 41, 59, 0.8); border-radius: 6px; border: 1px solid #475569; min-height: 60px;">
+         <div style="color: #cbd5e1; font-size: 12px; margin-bottom: 4px;">📍 區域即時資訊：</div>
+         <div id="tm-hover-content">
+            <div style="color: #94a3b8; font-size: 13px; text-align: center; margin: 8px 0;">請將滑鼠移至左側地圖區域</div>
+         </div>
+      </div>
+
+      <h3 style="margin: 0 0 12px 0; border-bottom: 1px solid #475569; padding-bottom: 8px; font-size: 14px; color: #facc15;">💰 票價圖例</h3>
+      <div id="tm-legend-container" style="max-height: 40vh; overflow-y: auto; padding-right: 4px;"></div>
+
+      <button id="tm-copy-btn" style="width: 100%; padding: 10px; margin-top: 16px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 14px; transition: background 0.2s;">
+        📋 複製底價資料 JSON
+      </button>
+    `;
+
+    document.getElementById('tm-copy-btn').addEventListener('click', () => {
+        const resultDict = {};
+        const catPrices = {};
+
+        currentAreaData.forEach(a => {
+            const status = (a.areaStatus || '').toUpperCase().trim();
+            if (status !== 'AVAILABLE') return; // 必須是 AVAILABLE 才複製
+
+            if (a.groupName && a.groupName.toUpperCase().includes('RESTRICTED VIEW')) return;
+
+            // 🌟 核心修復：濾除 '$' 符號與其他字元，只留下數字與小數點
+            const priceStr = String(a.ticketPrice || '').replace(/[^0-9.]/g, '');
+            const price = parseFloat(priceStr);
+            if (isNaN(price) || price <= 0) return;
+
+            // 原生 field_xxx 價錢
+            resultDict[a.sectionCode] = price;
+
+            // 處理 CAT 價錢
+            if (a.groupName) {
+                const catName = a.groupName.toUpperCase();
+                if (!catPrices[catName] || price < catPrices[catName]) {
+                    catPrices[catName] = price;
+                }
+            }
+        });
+
+        Object.assign(resultDict, catPrices);
+
+        const keys = Object.keys(resultDict);
+        if (keys.length === 0) {
+            alert('複製結果為空 {}！\n可能原因：地圖上有顏色的區域，實際狀態為 SELLING FAST 或其他非 AVAILABLE 的狀態。');
+            return;
+        }
+
+        const btn = document.getElementById('tm-copy-btn');
+        navigator.clipboard.writeText(JSON.stringify(resultDict, null, 4)).then(() => {
+            const oldText = btn.textContent;
+            btn.textContent = '✅ 已複製！請貼至 Python';
+            btn.style.background = '#10b981';
+            setTimeout(() => {
+                btn.textContent = oldText;
+                btn.style.background = '#3b82f6';
+            }, 2000);
+        }).catch(err => alert('複製失敗: ' + err));
+    });
+
+    renderLegendHtml();
+
+    let attempts = 0;
+    const colorSyncTimer = setInterval(() => {
+        attempts++;
+        const svgMapExists = !!document.querySelector('svg>g#sections');
+
+        if (svgMapExists) {
+            let anyChanged = false;
+            for (let [groupName, item] of legendMap.entries()) {
+                for (let secCode of item.refSections) {
+                    const el = document.getElementById(secCode);
+                    if (el) {
+                        let realFillColor = null;
+                        const firstChild = el.firstElementChild;
+                        if (firstChild) realFillColor = firstChild.getAttribute('fill');
+                        if (!realFillColor) realFillColor = el.getAttribute('fill');
+
+                        if (realFillColor && realFillColor !== 'none' && realFillColor !== item.color) {
+                            item.color = realFillColor;
+                            anyChanged = true;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (anyChanged) renderLegendHtml();
+            clearInterval(colorSyncTimer);
+        } else if (attempts > 30) {
+            clearInterval(colorSyncTimer);
+        }
+    }, 500);
+  }
+
+  function remove_adblock_loop() {
+    const iv = setInterval(() => {
+      let removed = false;
+      const m = document.querySelector('div.modal-backdrop.fade.show');
+      const a = document.getElementById('adblockModal');
+      if (m) { m.remove(); removed = true; }
+      if (a) { a.remove(); removed = true; }
+      if (removed && !document.querySelector('div.modal-backdrop.fade.show') && !document.getElementById('adblockModal')) {
+        clearInterval(iv);
+      }
+    }, 1000);
+  }
+
+  function promo_code() {
+    if (!Array.isArray(PROMO_CODES) || PROMO_CODES.length === 0) return;
+    const msg = document.querySelector('div.text-bold');
+    if (msg && /successfully applied/i.test(msg.textContent)) return;
+    const code = PROMO_CODES[promoIdx] || '';
+    if (!code) return;
+
+    const inp = document.getElementById('checkCode');
+    const btn = document.querySelector('.check-discount');
+    if (inp && btn) {
+      inp.value = code;
+      const lastIdx = PROMO_CODES.length - 1;
+      if (promoIdx >= lastIdx) {
+        if (typeof GM_deleteValue === 'function') GM_deleteValue('promo_idx');
+        else try { localStorage.removeItem('promo_idx'); } catch(_) {}
+      } else {
+        GM_setValue('promo_idx', promoIdx + 1);
+      }
+      btn.click();
+    }
+  }
+
+  window.addEventListener('load', () => {
+    remove_adblock_loop();
+    promo_code();
+  });
+})();
