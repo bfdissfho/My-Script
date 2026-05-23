@@ -79,7 +79,7 @@
                 secure_ticket();
                 hear();
                 // 480 秒后点击确认
-                setTimeout(confirm, 20000);
+                setTimeout(confirm, 480000);
             } else if (url.includes('/ticket/payment/')) {
                 clickPay();
             }
