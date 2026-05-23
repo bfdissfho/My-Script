@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         print at home
 // @namespace    http://tampermonkey.net/
-// @version      2025-07-06-3
+// @version      2026-05-23
 // @description  no
 // @match        https://ticketmaster.sg/ticket/checkout
 // @match        https://ticketmaster.sg/ticket/payment/*
@@ -42,12 +42,14 @@
             const radio = document.querySelector('.field-checkoutform-paymentid-12 input[type="radio"]');
             if (radio) radio.click();
         }
-        // 选择 Print-at-Home
+        // 选择取票方式 (新增 Mobile Ticket)
         function print_at_home() {
             const select = document.querySelector('#checkoutform-shipmentid');
             if (select) {
                 Array.from(select.options).forEach(opt => {
-                    if (opt.text === 'Print-at-Home' || opt.text === 'Ticket Delivery Delay') opt.selected = true;
+                    if (opt.text === 'Print-at-Home' || opt.text === 'Ticket Delivery Delay' || opt.text === 'Mobile Ticket') {
+                        opt.selected = true;
+                    }
                 });
             }
         }
@@ -77,7 +79,7 @@
                 secure_ticket();
                 hear();
                 // 480 秒后点击确认
-                setTimeout(confirm, 480000);
+                setTimeout(confirm, 20000);
             } else if (url.includes('/ticket/payment/')) {
                 clickPay();
             }
