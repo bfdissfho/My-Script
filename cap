@@ -1,51 +1,108 @@
 // ==UserScript==
 // @name         website capture
 // @namespace    http://tampermonkey.net/
-// @version      2025.06.121
-// @description  My Tampermonkey script
-// @match        https://ticketmaster.sg/ticket/check-captcha/*
-// @grant        none
+// @version      1.1
+// @description  擷取驗證碼、傳送至本地端 OCR Server 辨識，完成後自動勾選並送出
+// @match        https://ticketmaster.sg/ticket/check-captcha*
+// @grant        GM_xmlhttpRequest
+// @connect      127.0.0.1
 // @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/cap
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/cap
+// @run-at       document-end
 // ==/UserScript==
 
+(function () {
+    'use strict';
 
+    let maxRetries = 20;
 
-(function() {
-
-  function click_button() {
-    let checkboxElement = document.querySelector('#TicketForm_agree');
-    if (checkboxElement) {
-      checkboxElement.click();
-      let buttonElement = document.querySelector('button.btn.btn-primary');
-      if (buttonElement) {
-        buttonElement.click();
-
-      }
-    }
-  };
-
-  function website_capture() {
-    let observer = new MutationObserver(function(mutationsList) {
-      for (let mutation of mutationsList) {
-        if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-        let anticapture_solve = document.querySelector('div.ddddocr_solver.solved, div.antigate_solver.solved');
-          if (anticapture_solve) {
-            console.log("123")
-            observer.disconnect();
-            setTimeout(click_button, 500)
-            // Simulate clicking the button after a 5-second delay
-              // 5-second delay
+    // 自動送出的函數
+    function click_button() {
+        let checkboxElement = document.querySelector('#TicketForm_agree');
+        if (checkboxElement) {
+            // 如果還沒勾選，才執行點擊
+            if (!checkboxElement.checked) {
+                checkboxElement.click();
             }
-          }
+
+            let buttonElement = document.querySelector('button.btn.btn-primary');
+            if (buttonElement) {
+                buttonElement.click();
+                console.log("表單已自動送出！");
+            }
         }
-      }
-    );
+    };
 
-    // Start observing changes in the document
-    observer.observe(document, { childList: true, subtree: true });
-  }
+    function trySolveCaptcha() {
+        const img = document.querySelector("#TicketForm_verifyCode-image");
+        const input = document.querySelector("#TicketForm_verifyCode");
 
-  // Call the function
-  website_capture();
+        if (!img || !input) {
+            if (maxRetries > 0) {
+                maxRetries--;
+                setTimeout(trySolveCaptcha, 500);
+            }
+            return;
+        }
+
+        if (!img.complete) {
+            img.onload = executeOCR;
+        } else {
+            executeOCR();
+        }
+
+        async function executeOCR() {
+            try {
+                const blob = await fetch(img.src).then(r => r.blob());
+                const reader = new FileReader();
+
+                reader.onloadend = function () {
+                    const base64 = reader.result.split(',')[1];
+
+                    GM_xmlhttpRequest({
+                        method: "POST",
+                        url: "http://127.0.0.1:5000/ocr",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        data: JSON.stringify({ image: base64 }),
+                        onload: function(response) {
+                            try {
+                                const res = JSON.parse(response.responseText);
+                                if (res && res.result) {
+                                    // 1. 填入驗證碼
+                                    input.value = res.result;
+                                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                                    input.dispatchEvent(new Event('change', { bubbles: true }));
+
+                                    // 2. 標記完成狀態
+                                    const marker = document.createElement("div");
+                                    marker.className = "ddddocr_solver solved";
+                                    marker.style.display = "none";
+                                    document.body.appendChild(marker);
+
+                                    console.log("OCR 辨識成功: " + res.result);
+
+                                    // 3. 延遲 100 毫秒後自動送出，確保前端框架資料已綁定
+                                    setTimeout(click_button, 100);
+                                }
+                            } catch (e) {
+                                console.error("OCR API 返回格式錯誤:", e);
+                            }
+                        },
+                        onerror: function(err) {
+                            console.error("無法連線至本地 OCR Server:", err);
+                        }
+                    });
+                };
+
+                reader.readAsDataURL(blob);
+            } catch (error) {
+                console.error("無法取得驗證碼圖片:", error);
+            }
+        }
+    }
+
+    trySolveCaptcha();
+
 })();
