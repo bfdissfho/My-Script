@@ -2,7 +2,7 @@
 // @name         website capture
 // @namespace    http://tampermonkey.net/
 // @version      1.1
-// @description  擷取驗證碼、傳送至本地端 OCR Server 辨識，完成後自動勾選並送出
+// @description  no
 // @match        https://ticketmaster.sg/ticket/check-captcha*
 // @grant        GM_xmlhttpRequest
 // @connect      127.0.0.1
