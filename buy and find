@@ -1,85 +1,101 @@
 // ==UserScript==
 // @name         buyticket findticket
 // @namespace    http://tampermonkey.net/
-// @version      2025-11-12.1
+// @version      2026-05-29
 // @description  My Tampermonkey script
+// @author       Gemini
 // @match        https://ticketmaster.sg/activity/detail/*
 // @match        https://ticketmaster.sg/activity/game/*
-// @grant        none
 // @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/main/buy%20and%20find
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/main/buy%20and%20find
+// @grant        none
 // ==/UserScript==
-
 
 
 (function() {
     'use strict';
 
+
+
     // 設定想要點擊的按鈕索引：數字字串，如 '0','1','2'…；或 'random' 隨機
     const want_date = '0'; // <- 改成你想要的索引，或 'random'
 
-    function click_buyticket() {
-        // 點擊 Buy Ticket
-        const buy_ticket = document.querySelector(
-            "#main-container > section.whiteNav.shadow.sticky-top > div > div > div.col-lg-3.col-md-3.col-sm-3.col-xs-12.col-12.pt-3.py-sm-2.order-1.order-sm-2 > a"
-        );
-        if(click_buyticket){
-            buy_ticket.click();
-            setTimeout(click_findticket, 2000);
-        }
-    }
 
-    function click_findticket() {
-        // 找到所有 Find Tickets 按鈕
-        const find_tickets = document.querySelectorAll('.btn.btn-primary.text-bold.m-0');
-        if (find_tickets.length === 0) return;
+    // --- ⚙️ 使用者設定區 ---
+    const CHECK_INTERVAL = 500;    // 每 0.5 秒檢查一次
+    const MAX_CHECK_TIME = 5000;   // 總共只檢查 5 秒
+    const REFRESH_TIMEOUT = 60000; // 網頁載入後 60 秒自動刷新
+    // -----------------------
 
-        let index;
-        if (want_date === 'random') {
-            // 隨機選一個
-            index = Math.floor(Math.random() * find_tickets.length);
-        } else {
-            // 轉成數字，並確保在範圍內
-            const i = parseInt(want_date, 10);
-            index = (isNaN(i) || i < 0 || i >= find_tickets.length)
-                ? 0  // 無效則回退第一個
-                : i;
-        }
+    let elapsedTime = 0;
 
-        const url = find_tickets[index].href;
-        window.location.href = url;
-    }
+    // 尋找並點擊按鈕的函數
+    function findAndClickButton() {
+        const buttons = document.querySelectorAll('a.btn.btn-primary.text-bold.m-0');
+        const find_tickets = [];
 
-    function card_presale(){
-        document.querySelectorAll('li.buy').forEach(li => {
-            const a = li.querySelector('a');
-            if (!a) return;
-            if (a.href.includes('https://ticketmaster.sg/ticket/area/') ||
-                a.href.includes('https://ticketmaster.sg/activity/game/')) {
-                a.click();
+        // 1. 先把畫面上所有符合「Join the Queue」的按鈕找出來，存入陣列
+        for (let btn of buttons) {
+            if (btn.textContent.trim() === 'Join the Queue' || btn.innerText.includes('Join the Queue')) {
+                find_tickets.push(btn);
             }
-        });
-    }
-
-    function url_game(){
-        if (location.href.includes('https://ticketmaster.sg/activity/game/')) {
-            const target = document.querySelector('a.btn.btn-primary.text-bold.m-0[href*="https://ticketmaster.sg/ticket/area"]');
-            if (target) target.click();
         }
-    }
 
-    function refresh_paused(){
-        if (document.title.includes("Your Browsing Activity Has Been Paused")) {
-            setTimeout(() => location.reload(), 20000);
+        // 2. 如果有找到至少一個按鈕，則執行選擇邏輯
+        if (find_tickets.length > 0) {
+            let index;
+
+            if (want_date === 'random') {
+                // 隨機選一個
+                index = Math.floor(Math.random() * find_tickets.length);
+                console.log(`🎲 [成功] 找到 ${find_tickets.length} 個場次按鈕，隨機選中第 ${index + 1} 個！`);
+            } else {
+                // 轉成數字，並確保在範圍內
+                const i = parseInt(want_date, 10);
+                index = (isNaN(i) || i < 0 || i >= find_tickets.length)
+                    ? 0  // 無效則回退第一個
+                    : i;
+                console.log(`🎯 [成功] 找到 ${find_tickets.length} 個場次按鈕，已指定點擊索引 [${index}] (即第 ${index + 1} 個)！`);
+            }
+
+            // 執行點擊
+            find_tickets[index].click();
+            return true;
         }
+
+        return false; // 沒找到半個
     }
 
-    // 啟動時機
-    setTimeout(refresh_paused, 1000);
-    setTimeout(click_findticket, 1000);
-    setTimeout(card_presale,   2000);
-    setTimeout(url_game,       2000);
-    setTimeout(click_findticket, 7000);
-    setTimeout(click_findticket, 16000);
+    // --- 🚀 執行主邏輯 ---
+
+    // 1. 網頁一載入，先立即檢查一次
+    if (findAndClickButton()) {
+        return;
+    }
+
+    // 2. 設定每 0.5 秒檢查一次的定時器
+    const intervalId = setInterval(() => {
+        elapsedTime += CHECK_INTERVAL;
+        console.log(`🔍 正在檢查按鈕... 已耗時: ${elapsedTime / 1000} 秒`);
+
+        // 如果找到按鈕並成功點擊
+        if (findAndClickButton()) {
+            clearInterval(intervalId); // 停止檢查
+            clearTimeout(timeoutId);   // 取消後續的自動刷新
+            return;
+        }
+
+        // 如果檢查時間達到了 5 秒，但還是沒找到
+        if (elapsedTime >= MAX_CHECK_TIME) {
+            clearInterval(intervalId); // 停止檢查
+            console.log('🛑 已檢查滿 5 秒未找到按鈕。停止檢查，等待 60 秒到期刷新...');
+        }
+    }, CHECK_INTERVAL);
+
+    // 3. 設定網頁載入後 60 秒的自動刷新定時器
+    const timeoutId = setTimeout(() => {
+        console.log('⏳ 網頁已載入滿 60 秒，正在重新整理頁面...');
+        location.reload();
+    }, REFRESH_TIMEOUT);
 
 })();
