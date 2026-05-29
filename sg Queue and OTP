@@ -1,0 +1,181 @@
+// ==UserScript==
+// @name         sg Queue and OTP
+// @namespace    http://tampermonkey.net/
+// @version      3.0
+// @description  no
+// @author       Your Name
+// @match        https://ticketmaster.sg/ticket/area/*
+// @grant        GM_xmlhttpRequest
+// @connect      127.0.0.1
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // ==========================================
+    // ⚙️ 置頂設定區 (請依照需求更改)
+    // ==========================================
+    const CONFIG = {
+        isFastMode: true,          // true = 鬥快模式 (排隊 0.5 秒按); false = 普通模式 (排隊 1 分鐘按)
+        mfaCheckInterval: 120000,  // 後續驗證碼與信箱頁面偵測間隔 (2分鐘 = 120000 毫秒)
+        queueFastInterval: 500,    // 鬥快模式排隊偵測頻率
+        queueNormalInterval: 60000 // 普通模式排隊偵測頻率
+    };
+
+    console.log(`🎟️ Ticketmaster 腳本啟動！目前狀態：[${CONFIG.isFastMode ? "鬥快模式 🚀" : "普通模式 🚶"}]`);
+
+    // ==========================================
+    // 區塊 1：獨立的 Join the Queue 偵測 (鬥快 vs 普通)
+    // ==========================================
+    const queueIntervalTime = CONFIG.isFastMode ? CONFIG.queueFastInterval : CONFIG.queueNormalInterval;
+
+    const queueInterval = setInterval(() => {
+        // 使用多種方式精準定位按鈕
+        const btnByAction = document.querySelector('button[data-event-action="Join the Queue"]');
+        const btnByBdd = document.querySelector('button[data-bdd="lobby-card-CTAButton"]');
+
+        // 尋找畫面上所有按鈕，檢查文字是否包含 Join the Queue
+        const allButtons = document.querySelectorAll('button');
+        let btnByText = null;
+        for (let btn of allButtons) {
+            if (btn.textContent.includes('Join the Queue')) {
+                btnByText = btn;
+                break;
+            }
+        }
+
+        const targetButton = btnByAction || btnByBdd || btnByText;
+
+        if (targetButton) {
+            if (!targetButton.disabled && !targetButton.hasAttribute('disabled')) {
+                console.log("✅ 找到「Join the Queue」按鈕，準備點擊！");
+
+                targetButton.click();
+
+                // 發送真實的滑鼠點擊事件突破 React 限制
+                const mouseClickEvent = new MouseEvent('click', {
+                    bubbles: true, cancelable: true, view: window
+                });
+                targetButton.dispatchEvent(mouseClickEvent);
+
+                console.log("🚀 Join the Queue 點擊指令已送出！停止排隊偵測。");
+                clearInterval(queueInterval); // 點擊後立即停止這個定時器
+            } else {
+                console.log("⏳ 找到排隊按鈕，但目前是 disabled (禁用) 狀態，等待解鎖...");
+            }
+        }
+    }, queueIntervalTime);
+
+
+    // ==========================================
+    // 區塊 2：Email 選擇與 OTP 輸入 (每 2 分鐘檢查一次)
+    // ==========================================
+
+    // 狀態鎖：防止網頁卡頓時重覆點擊
+    let isEmailClicked = false;
+    let isOtpFilled = false;
+    let isFetching = false;
+
+    // React 專用模擬輸入
+    function setNativeValue(element, value) {
+        const valueSetter = Object.getOwnPropertyDescriptor(element, 'value').set;
+        const prototype = Object.getPrototypeOf(element);
+        const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
+        if (valueSetter && valueSetter !== prototypeValueSetter) {
+            prototypeValueSetter.call(element, value);
+        } else {
+            valueSetter.call(element, value);
+        }
+        element.dispatchEvent(new Event('input', { bubbles: true }));
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function checkMFALoop() {
+        // --- 階段 A：點擊 Send to Email ---
+        const emailRadioInput = document.querySelector('input[data-bdd="mfa-email-radio-button"]');
+        if (emailRadioInput && !isEmailClicked) {
+            const labelContainer = emailRadioInput.closest('label');
+            if (labelContainer) {
+                // 儲存隱藏信箱特徵
+                const textContext = document.body.innerText;
+                const maskMatch = textContext.match(/[\w.-]+\*+[\w.-]*@[\w.-]+\.[a-zA-Z]+/);
+                if (maskMatch) sessionStorage.setItem('tm_masked_email', maskMatch[0]);
+
+                console.log("✉️ 點擊發送 Email...");
+                isEmailClicked = true; // 上鎖
+                labelContainer.click();
+
+                // 點擊 Next (共用 mfa-next-button)
+                setTimeout(() => {
+                    const nextBtn = document.querySelector('button[data-bdd="mfa-next-button"]');
+                    if (nextBtn) nextBtn.click();
+                }, 500);
+            }
+            return;
+        }
+
+        // --- 階段 B：請求 OTP 並點擊 Confirm Code ---
+        const otpInput = document.querySelector('input[name*="code"], input[type="number"], input[data-bdd="otp-input"]');
+        if (otpInput && !isOtpFilled && !isFetching) {
+            isFetching = true; // 網路請求鎖定
+
+            let maskedEmail = sessionStorage.getItem('tm_masked_email') || "";
+            if (!maskedEmail) {
+                const textContext = document.body.innerText;
+                const maskMatch = textContext.match(/[\w.-]+\*+[\w.-]*@[\w.-]+\.[a-zA-Z]+/);
+                if (maskMatch) maskedEmail = maskMatch[0];
+            }
+
+            console.log(`🔑 發現 OTP 輸入框！向 Python 請求驗證碼 (特徵: ${maskedEmail})...`);
+
+            GM_xmlhttpRequest({
+                method: "GET",
+                url: `http://127.0.0.1:5000/api/get_otp?mask=${encodeURIComponent(maskedEmail)}`,
+                timeout: 15000,
+                onload: function(response) {
+                    try {
+                        const data = JSON.parse(response.responseText);
+                        if (data.status === "success" && data.code) {
+                            console.log("🔥 成功取得驗證碼: " + data.code);
+                            isOtpFilled = true; // 徹底上鎖，本視窗不再請求
+
+                            setNativeValue(otpInput, data.code);
+
+                            // 依照要求：尋找專屬的 Confirm Code 按鈕並點擊
+                            setTimeout(() => {
+                                const confirmBtn = document.querySelector('button[data-bdd="mfa-next-button"]');
+                                if (confirmBtn && confirmBtn.textContent.includes('Confirm Code')) {
+                                    console.log("👉 點擊 Confirm Code 按鈕...");
+                                    confirmBtn.click();
+                                } else if (confirmBtn) {
+                                    // 容錯防禦：萬一文字沒配對到，但有這顆 mfa-next-button 照樣按
+                                    console.log("👉 點擊 MFA 繼續按鈕...");
+                                    confirmBtn.click();
+                                }
+                            }, 500);
+
+                        } else {
+                            console.log("⏳ Python 尚未回傳，2 分鐘後重新檢查...");
+                        }
+                    } catch (e) {
+                        console.error("❌ 解析 API 回應失敗", e);
+                    } finally {
+                        isFetching = false;
+                    }
+                },
+                ontimeout: function() {
+                    console.warn("⚠️ 請求超時，等待下次循環...");
+                    isFetching = false;
+                },
+                onerror: function(err) {
+                    console.error("❌ API 連線錯誤", err);
+                    isFetching = false;
+                }
+            });
+        }
+    }
+
+    // 啟動 MFA 的定時檢查 (依據設定：預設 2 分鐘)
+    setInterval(checkMFALoop, CONFIG.mfaCheckInterval);
+
+})();
