@@ -1,12 +1,16 @@
 // ==UserScript==
 // @name         sg Queue and OTP
 // @namespace    http://tampermonkey.net/
-// @version      3.0
-// @description  no
-// @author       Your Name
-// @match        https://ticketmaster.sg/ticket/area/*
+// @version      5.0
+// @description  Google 跳板 -> TM Auth 擬真登入 -> SG Queue & MFA 一條龍
+// @author       You
+// @match        *://*.google.com/*
+// @match        *://auth.ticketmaster.com/as/authorization.oauth2?client_id=*
+// @match        *://ticketmaster.sg/*
 // @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/sg%20Queue%20and%20OTP
 // @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/sg%20Queue%20and%20OTP
+// @grant        GM_setValue
+// @grant        GM_getValue
 // @grant        GM_xmlhttpRequest
 // @connect      127.0.0.1
 // ==/UserScript==
@@ -18,166 +22,249 @@
     // ⚙️ 置頂設定區 (請依照需求更改)
     // ==========================================
     const CONFIG = {
-        isFastMode: false,          // true = 鬥快模式 (排隊 0.5 秒按); false = 普通模式 (排隊 1 分鐘按)
-        mfaCheckInterval: 120000,  // 後續驗證碼與信箱頁面偵測間隔 (2分鐘 = 120000 毫秒)
-        queueFastInterval: 500,    // 鬥快模式排隊偵測頻率
-        queueNormalInterval: 60000 // 普通模式排隊偵測頻率
+        isFastMode: true,  // true = 鬥快模式 (排隊延遲 0.2 秒); false = 平常模式 (排隊延遲 5 秒)
     };
 
-    console.log(`🎟️ Ticketmaster 腳本啟動！目前狀態：[${CONFIG.isFastMode ? "鬥快模式 🚀" : "普通模式 🚶"}]`);
+    const API_GET_ACCOUNT = "http://127.0.0.1:5000/get_account";
+    const API_GET_OTP = "http://127.0.0.1:5000/get_otp";
+    const currentHost = window.location.hostname;
+    const apId = GM_getValue("adspower_id"); 
+
+    console.log(`🎟️ Ticketmaster 腳本啟動！目前排隊狀態：[${CONFIG.isFastMode ? "鬥快模式 🚀" : "平常模式 🚶"}]`);
 
     // ==========================================
-    // 區塊 1：獨立的 Join the Queue 偵測 (鬥快 vs 普通)
+    // 區塊 1：Google 跳板 (手動跳轉綁定模式)
     // ==========================================
-    const queueIntervalTime = CONFIG.isFastMode ? CONFIG.queueFastInterval : CONFIG.queueNormalInterval;
+    if (currentHost.includes("google.com")) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const newApId = urlParams.get("ap_id");
 
-    const queueInterval = setInterval(() => {
-        // 使用多種方式精準定位按鈕
-        const btnByAction = document.querySelector('button[data-event-action="Join the Queue"]');
-        const btnByBdd = document.querySelector('button[data-bdd="lobby-card-CTAButton"]');
-
-        // 尋找畫面上所有按鈕，檢查文字是否包含 Join the Queue
-        const allButtons = document.querySelectorAll('button');
-        let btnByText = null;
-        for (let btn of allButtons) {
-            if (btn.textContent.includes('Join the Queue')) {
-                btnByText = btn;
-                break;
-            }
+        if (newApId) {
+            console.log("[TM Auto] ✅ 成功在 Google 綁定 AdsPower 序號:", newApId);
+            GM_setValue("adspower_id", newApId); 
+            
+            document.body.innerHTML = `
+                <div style="text-align:center; margin-top: 20%; font-family: sans-serif;">
+                    <h1 style="color: #4CAF50; font-size: 48px;">✅ 綁定成功！</h1>
+                    <h2 style="color: #333;">目前 AdsPower 序號：<span style="color: red;">${newApId}</span></h2>
+                    <p style="font-size: 20px; color: #666;">請手動在上方網址列貼上 Ticketmaster 網址並按下 Enter。</p>
+                </div>
+            `;
         }
-
-        const targetButton = btnByAction || btnByBdd || btnByText;
-
-        if (targetButton) {
-            if (!targetButton.disabled && !targetButton.hasAttribute('disabled')) {
-                console.log("✅ 找到「Join the Queue」按鈕，準備點擊！");
-
-                targetButton.click();
-
-                // 發送真實的滑鼠點擊事件突破 React 限制
-                const mouseClickEvent = new MouseEvent('click', {
-                    bubbles: true, cancelable: true, view: window
-                });
-                targetButton.dispatchEvent(mouseClickEvent);
-
-                console.log("🚀 Join the Queue 點擊指令已送出！停止排隊偵測。");
-                clearInterval(queueInterval); // 點擊後立即停止這個定時器
-            } else {
-                console.log("⏳ 找到排隊按鈕，但目前是 disabled (禁用) 狀態，等待解鎖...");
-            }
-        }
-    }, queueIntervalTime);
-
-
-    // ==========================================
-    // 區塊 2：Email 選擇與 OTP 輸入 (每 2 分鐘檢查一次)
-    // ==========================================
-
-    // 狀態鎖：防止網頁卡頓時重覆點擊
-    let isEmailClicked = false;
-    let isOtpFilled = false;
-    let isFetching = false;
-
-    // React 專用模擬輸入
-    function setNativeValue(element, value) {
-        const valueSetter = Object.getOwnPropertyDescriptor(element, 'value').set;
-        const prototype = Object.getPrototypeOf(element);
-        const prototypeValueSetter = Object.getOwnPropertyDescriptor(prototype, 'value').set;
-        if (valueSetter && valueSetter !== prototypeValueSetter) {
-            prototypeValueSetter.call(element, value);
-        } else {
-            valueSetter.call(element, value);
-        }
-        element.dispatchEvent(new Event('input', { bubbles: true }));
-        element.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
-    function checkMFALoop() {
-        // --- 階段 A：點擊 Send to Email ---
-        const emailRadioInput = document.querySelector('input[data-bdd="mfa-email-radio-button"]');
-        if (emailRadioInput && !isEmailClicked) {
-            const labelContainer = emailRadioInput.closest('label');
-            if (labelContainer) {
-                // 儲存隱藏信箱特徵
-                const textContext = document.body.innerText;
-                const maskMatch = textContext.match(/[\w.-]+\*+[\w.-]*@[\w.-]+\.[a-zA-Z]+/);
-                if (maskMatch) sessionStorage.setItem('tm_masked_email', maskMatch[0]);
-
-                console.log("✉️ 點擊發送 Email...");
-                isEmailClicked = true; // 上鎖
-                labelContainer.click();
-
-                // 點擊 Next (共用 mfa-next-button)
-                setTimeout(() => {
-                    const nextBtn = document.querySelector('button[data-bdd="mfa-next-button"]');
-                    if (nextBtn) nextBtn.click();
-                }, 500);
-            }
+    // ==========================================
+    // 區塊 2：auth.ticketmaster.com (處理登入)
+    // ==========================================
+    else if (currentHost.includes("auth.ticketmaster.com")) {
+        if (!apId) {
+            console.warn("[TM Auto] 找不到綁定的序號，腳本中止。");
             return;
         }
 
-        // --- 階段 B：請求 OTP 並點擊 Confirm Code ---
-        const otpInput = document.querySelector('input[name*="code"], input[type="number"], input[data-bdd="otp-input"]');
-        if (otpInput && !isOtpFilled && !isFetching) {
-            isFetching = true; // 網路請求鎖定
+        // 狀態機加入 notRightNowClicked，防止重複點擊
+        let state = { emailDone: false, passwordDone: false, radioDone: false, otpFetching: false, notRightNowClicked: false };
 
-            let maskedEmail = sessionStorage.getItem('tm_masked_email') || "";
-            if (!maskedEmail) {
-                const textContext = document.body.innerText;
-                const maskMatch = textContext.match(/[\w.-]+\*+[\w.-]*@[\w.-]+\.[a-zA-Z]+/);
-                if (maskMatch) maskedEmail = maskMatch[0];
-            }
+        console.log(`[TM Auto] 向 Flask 請求帳密 (序號: ${apId})...`);
+        GM_xmlhttpRequest({
+            method: "GET",
+            url: `${API_GET_ACCOUNT}?ap_id=${apId}`,
+            onload: function(response) {
+                try {
+                    const data = JSON.parse(response.responseText);
+                    if (data.email && data.password) {
+                        
+                        setInterval(() => {
+                            // 填 Email
+                            const emailInput = document.querySelector('input#email-input');
+                            if (emailInput && !state.emailDone) {
+                                state.emailDone = true; 
+                                console.log("[TM Auto] 找到 Email 欄位，模擬人類發呆與反應時間...");
+                                
+                                (async () => {
+                                    await randomDelay(1500, 3000); 
+                                    await fillReactInputHuman(emailInput, data.email);
+                                    await randomDelay(300, 800);
+                                    clickButtonByText('Continue');
+                                })();
+                            }
 
-            console.log(`🔑 發現 OTP 輸入框！向 Python 請求驗證碼 (特徵: ${maskedEmail})...`);
+                            // 填 Password
+                            const passwordInput = document.querySelector('input#password-input');
+                            if (passwordInput && !state.passwordDone) {
+                                state.passwordDone = true;
+                                console.log("[TM Auto] 找到密碼欄位，模擬人類反應時間...");
+                                
+                                (async () => {
+                                    await randomDelay(1000, 2000); 
+                                    await fillReactInputHuman(passwordInput, data.password);
+                                    await randomDelay(400, 900);
+                                    const signInBtn = document.querySelector('button[name="sign-in"]');
+                                    if (signInBtn) signInBtn.click();
+                                })();
+                            }
 
-            GM_xmlhttpRequest({
-                method: "GET",
-                url: `http://127.0.0.1:5000/api/get_otp?mask=${encodeURIComponent(maskedEmail)}`,
-                timeout: 15000,
-                onload: function(response) {
-                    try {
-                        const data = JSON.parse(response.responseText);
-                        if (data.status === "success" && data.code) {
-                            console.log("🔥 成功取得驗證碼: " + data.code);
-                            isOtpFilled = true; // 徹底上鎖，本視窗不再請求
+                            handleMfaFlow(state);
 
-                            setNativeValue(otpInput, data.code);
-
-                            // 依照要求：尋找專屬的 Confirm Code 按鈕並點擊
-                            setTimeout(() => {
-                                const confirmBtn = document.querySelector('button[data-bdd="mfa-next-button"]');
-                                if (confirmBtn && confirmBtn.textContent.includes('Confirm Code')) {
-                                    console.log("👉 點擊 Confirm Code 按鈕...");
-                                    confirmBtn.click();
-                                } else if (confirmBtn) {
-                                    // 容錯防禦：萬一文字沒配對到，但有這顆 mfa-next-button 照樣按
-                                    console.log("👉 點擊 MFA 繼續按鈕...");
-                                    confirmBtn.click();
-                                }
-                            }, 500);
-
-                        } else {
-                            console.log("⏳ Python 尚未回傳，2 分鐘後重新檢查...");
-                        }
-                    } catch (e) {
-                        console.error("❌ 解析 API 回應失敗", e);
-                    } finally {
-                        isFetching = false;
+                        }, 500);
                     }
-                },
-                ontimeout: function() {
-                    console.warn("⚠️ 請求超時，等待下次循環...");
-                    isFetching = false;
-                },
-                onerror: function(err) {
-                    console.error("❌ API 連線錯誤", err);
-                    isFetching = false;
+                } catch(e) {
+                    console.error("[TM Auto] 解析帳密 API 失敗", e);
                 }
-            });
+            }
+        });
+    }
+
+    // ==========================================
+    // 區塊 3：ticketmaster.sg (處理排隊與結帳 MFA)
+    // ==========================================
+    else if (currentHost.includes("ticketmaster.sg")) {
+        if (!apId) return;
+        
+        let state = { radioDone: false, otpFetching: false, notRightNowClicked: false };
+        let queueClicked = false;
+
+        setInterval(() => {
+            // A. 處理排隊按鈕 (依照 CONFIG 決定延遲)
+            if (!queueClicked && window.location.href.includes('/ticket/area/')) {
+                const targetButton = document.querySelector('button[data-event-action="Join the Queue"]') || 
+                                     document.querySelector('button[data-bdd="lobby-card-CTAButton"]');
+                if (targetButton && !targetButton.disabled) {
+                    queueClicked = true; // 立刻上鎖，避免重複排程
+                    
+                    const queueDelay = CONFIG.isFastMode ? 200 : 5000;
+                    console.log(`[TM Auto] 發現 Join the Queue！${CONFIG.isFastMode ? '鬥快模式' : '平常模式'}，等待 ${queueDelay/1000} 秒後點擊...`);
+                    
+                    setTimeout(() => {
+                        targetButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+                        console.log("[TM Auto] 已點擊 Join the Queue！");
+                    }, queueDelay);
+                }
+            }
+            
+            // B. 處理 MFA (SG 階段)
+            handleMfaFlow(state);
+
+        }, 500);
+    }
+
+    // ==========================================
+    // 共用模組：MFA 自動化流程
+    // ==========================================
+    function handleMfaFlow(state) {
+        // 1. 點選 Email Radio & Next
+        const emailRadio = document.querySelector('input#email-radio-input, input[data-bdd="mfa-email-radio-button"]');
+        if (emailRadio && !state.radioDone) {
+            state.radioDone = true;
+            console.log("[TM Auto] 找到 Email 驗證選項，模擬反應時間...");
+            
+            (async () => {
+                await randomDelay(1000, 2500);
+                emailRadio.click();
+                await randomDelay(500, 800);
+                const nextBtn = document.querySelector('button[data-bdd="next-button"], button[data-bdd="mfa-next-button"]');
+                if (nextBtn) nextBtn.click();
+            })();
+        }
+
+        // 2. 輪詢 OTP 填入
+        const otpInput = document.querySelector('input#otp-input, input[name*="code"], input[data-bdd="otp-input"]');
+        if (otpInput && !state.otpFetching) {
+            state.otpFetching = true;
+            console.log(`[TM Auto] 偵測到 OTP 欄位，向 Python 請求驗證碼 (ap_id: ${apId})...`);
+            
+            const pollInterval = setInterval(() => {
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: `${API_GET_OTP}?ap_id=${apId}`,
+                    onload: function(res) {
+                        try {
+                            const data = JSON.parse(res.responseText);
+                            if (data.otp) {
+                                console.log("[TM Auto] 成功獲取 OTP:", data.otp);
+                                clearInterval(pollInterval);
+                                
+                                (async () => {
+                                    await randomDelay(500, 1200);
+                                    await fillReactInputHuman(otpInput, data.otp);
+                                    await randomDelay(200, 500);
+                                    const confirmBtn = document.querySelector('button[data-bdd="confirm-code-confirm-button"], button[data-bdd="mfa-next-button"]');
+                                    if (confirmBtn) confirmBtn.click();
+                                })();
+                            }
+                        } catch(e) {}
+                    }
+                });
+            }, 3000);
+        }
+
+        // 3. 處理 Not Right Now 彈窗 (加入 2 秒延遲與狀態鎖)
+        if (!state.notRightNowClicked) {
+            const buttons = document.querySelectorAll('button');
+            for (let btn of buttons) {
+                if (btn.textContent.trim() === 'Not Right Now') {
+                    state.notRightNowClicked = true; // 上鎖
+                    console.log("[TM Auto] 發現 Not Right Now 彈窗，發呆 2 秒後點擊...");
+                    
+                    setTimeout(() => {
+                        btn.click();
+                        console.log("[TM Auto] 已拒絕 Not Right Now 邀請。");
+                    }, 2000);
+                    break;
+                }
+            }
         }
     }
 
-    // 啟動 MFA 的定時檢查 (依據設定：預設 2 分鐘)
-    setInterval(checkMFALoop, CONFIG.mfaCheckInterval);
+    // ==========================================
+    // 核心武裝：終極擬真輸入術
+    // ==========================================
+    async function fillReactInputHuman(element, text) {
+        element.focus();
+        element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+        element.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+        element.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+        
+        await randomDelay(100, 300); 
 
+        const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value").set;
+        
+        for (let i = 0; i < text.length; i++) {
+            const char = text[i];
+            
+            element.dispatchEvent(new KeyboardEvent('keydown', { key: char, bubbles: true }));
+            element.dispatchEvent(new KeyboardEvent('keypress', { key: char, bubbles: true }));
+            
+            nativeInputValueSetter.call(element, text.substring(0, i + 1));
+            element.dispatchEvent(new Event('input', { bubbles: true }));
+            
+            element.dispatchEvent(new KeyboardEvent('keyup', { key: char, bubbles: true }));
+            
+            await randomDelay(30, 150); 
+        }
+
+        element.dispatchEvent(new Event('change', { bubbles: true }));
+        await randomDelay(100, 200);
+        element.blur();
+    }
+
+    // ==========================================
+    // 輔助工具
+    // ==========================================
+    function randomDelay(min, max) {
+        const delay = Math.floor(Math.random() * (max - min + 1)) + min;
+        return new Promise(resolve => setTimeout(resolve, delay));
+    }
+
+    function clickButtonByText(text, exactMatch = false) {
+        const buttons = document.querySelectorAll('button');
+        for (let btn of buttons) {
+            const btnText = btn.textContent.trim();
+            if (exactMatch ? btnText === text : btnText.includes(text)) {
+                btn.click();
+                return true;
+            }
+        }
+        return false;
+    }
 })();
