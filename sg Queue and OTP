@@ -18,7 +18,7 @@
     // ⚙️ 置頂設定區 (請依照需求更改)
     // ==========================================
     const CONFIG = {
-        isFastMode: true,          // true = 鬥快模式 (排隊 0.5 秒按); false = 普通模式 (排隊 1 分鐘按)
+        isFastMode: false,          // true = 鬥快模式 (排隊 0.5 秒按); false = 普通模式 (排隊 1 分鐘按)
         mfaCheckInterval: 120000,  // 後續驗證碼與信箱頁面偵測間隔 (2分鐘 = 120000 毫秒)
         queueFastInterval: 500,    // 鬥快模式排隊偵測頻率
         queueNormalInterval: 60000 // 普通模式排隊偵測頻率
