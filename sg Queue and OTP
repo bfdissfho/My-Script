@@ -5,6 +5,8 @@
 // @description  no
 // @author       Your Name
 // @match        https://ticketmaster.sg/ticket/area/*
+// @updateURL    https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/sg%20Queue%20and%20OTP
+// @downloadURL  https://raw.githubusercontent.com/bfdissfho/My-Script/refs/heads/main/sg%20Queue%20and%20OTP
 // @grant        GM_xmlhttpRequest
 // @connect      127.0.0.1
 // ==/UserScript==
